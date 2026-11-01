@@ -79,6 +79,16 @@ return [
             'edit-media' => 'Edit Media',
             'delete-media' => 'Delete Media',
         ],
+        'poster' => [
+            'label' => 'Poster image',
+            'capture' => 'Use current frame',
+            'upload' => 'Upload image',
+            'remove' => 'Remove',
+            'none' => 'No poster image: the browser shows the first frame.',
+            'not_ready' => 'The video is not loaded yet, start it or wait a moment.',
+            'capture_failed' => 'The frame could not be taken from this video. Upload an image instead.',
+            'invalid' => 'The poster must be a JPEG, PNG or WebP image.',
+        ],
     ],
     'picker' => [
         'title' => 'Select Media',

@@ -136,7 +136,7 @@
     @if(str($getRecord()->mime_type)->contains('image'))
         <img src="{{ $getRecord()->getUrl() }}" alt="{{ $getRecord()->name }}" />
     @elseif(str($getRecord()->mime_type)->contains('video'))
-        <video src="{{ $getRecord()->getUrl() }}"></video>
+        <video src="{{ $getRecord()->getUrl() }}" @if($poster = \TomatoPHP\FilamentMediaManager\Services\VideoPoster::url($getRecord())) poster="{{ $poster }}" @endif preload="metadata"></video>
     @elseif(str($getRecord()->mime_type)->contains('audio'))
         <x-filament::icon name="heroicon-o-musical-note" class="table-media-icon-large" style="color: #ec4899;" />
     @else

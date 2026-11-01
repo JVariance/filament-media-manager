@@ -9,6 +9,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ManageRecords;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use TomatoPHP\FilamentMediaManager\Form\VideoPosterPicker;
 use TomatoPHP\FilamentMediaManager\Models\Folder;
 use TomatoPHP\FilamentMediaManager\Models\Media;
 use TomatoPHP\FilamentMediaManager\Resources\Actions\CreateMediaAction;
@@ -17,6 +18,7 @@ use TomatoPHP\FilamentMediaManager\Resources\Actions\DeleteFolderAction;
 use TomatoPHP\FilamentMediaManager\Resources\Actions\EditCurrentFolderAction;
 use TomatoPHP\FilamentMediaManager\Resources\FolderResource;
 use TomatoPHP\FilamentMediaManager\Resources\MediaResource;
+use TomatoPHP\FilamentMediaManager\Services\VideoPoster;
 
 class ListMedia extends ManageRecords
 {
@@ -169,7 +171,7 @@ class ListMedia extends ManageRecords
                     'alt' => $media->getCustomProperty('alt'),
                 ];
             })
-            ->schema([
+            ->schema(fn (array $arguments): array => [
                 TextInput::make('title')
                     ->label('Title')
                     ->maxLength(255),
@@ -180,6 +182,10 @@ class ListMedia extends ManageRecords
                 TextInput::make('alt')
                     ->label('Alt Text')
                     ->maxLength(255),
+                VideoPosterPicker::make('poster')
+                    ->label(trans('filament-media-manager::messages.media.poster.label'))
+                    ->media(fn (): ?Media => Media::find($arguments['record']['id'] ?? null))
+                    ->visible(fn (): bool => ($media = Media::find($arguments['record']['id'] ?? null)) && VideoPoster::isVideo($media)),
             ])
             ->action(function (array $arguments, array $data) {
                 $media = Media::find($arguments['record']['id']);
@@ -188,6 +194,10 @@ class ListMedia extends ManageRecords
                 $media->setCustomProperty('description', $data['description']);
                 $media->setCustomProperty('alt', $data['alt']);
                 $media->save();
+
+                if (VideoPoster::isVideo($media)) {
+                    VideoPosterPicker::save($media, $data['poster'] ?? null);
+                }
             })
             ->successNotificationTitle('Media updated successfully');
     }

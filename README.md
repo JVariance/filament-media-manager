@@ -54,6 +54,7 @@ finally, register the plugin on `/app/Providers/Filament/AdminPanelProvider.php`
 
 - 📁 Manage your media files using spatie media library
 - 📂 Create folders and subfolders
+- 🎞️ Poster images for videos, taken from a frame or uploaded
 - 🔒 Set password for folders with secure access
 - 📝 Upload Files with Custom Fields using `->schema()`
 - 🤖 Auto Create Folders for Model/Collection/Record
@@ -423,6 +424,20 @@ you can allow create and manage subfolders on your media manager on `/app/Provid
         ->allowSubFolders()
 ])
 ```
+
+## Video Posters
+
+When editing a video in the media details, a poster image can be set: play or seek the video and take the frame on screen, or upload a JPEG, PNG or WebP image. The poster is shown before the video plays, in the media list, the picker and the table.
+
+The image is stored next to the video (`{media directory}/posters/`), its file name in the custom property `poster`, and it is removed together with the video. In your frontend:
+
+```blade
+<video src="{{ $media->getUrl() }}" poster="{{ \TomatoPHP\FilamentMediaManager\Services\VideoPoster::url($media) }}" controls></video>
+```
+
+The package's `Media` model also has `$media->getPosterUrl()`.
+
+To take a frame, the browser has to load the video from the panel's own origin, so the plugin registers an authenticated panel route that serves it (with range requests for seeking). If your plugin class overrides `register()`, call `$this->registerRoutes($panel)` in it.
 
 ## Allow User Access
 

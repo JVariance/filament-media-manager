@@ -3,9 +3,18 @@
 namespace TomatoPHP\FilamentMediaManager\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use TomatoPHP\FilamentMediaManager\Services\VideoPoster;
 
 class Media extends \Spatie\MediaLibrary\MediaCollections\Models\Media
 {
+    /**
+     * The poster image of a video, null without one (VideoPoster)
+     */
+    public function getPosterUrl(): ?string
+    {
+        return VideoPoster::url($this);
+    }
+
     protected static function booted(): void
     {
         static::addGlobalScope('folder', function (Builder $query) {
