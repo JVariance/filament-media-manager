@@ -104,6 +104,7 @@ return [
             'not_ready' => 'Video henüz yüklenmedi, başlatın veya biraz bekleyin.',
             'capture_failed' => 'Bu videodan kare alınamadı. Bunun yerine bir görsel yükleyin.',
             'invalid' => 'Kapak görseli JPEG, PNG veya WebP olmalıdır.',
+            'upload_failed' => 'Görsel yüklenemedi. Tekrar deneyin.',
         ],
         'focal' => [
             'label' => 'Odak noktası',
