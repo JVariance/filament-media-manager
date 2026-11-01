@@ -15,8 +15,10 @@ use TomatoPHP\FilamentMediaManager\Resources\Actions\CreateMediaAction;
 use TomatoPHP\FilamentMediaManager\Resources\Actions\CreateSubFolderAction;
 use TomatoPHP\FilamentMediaManager\Resources\Actions\DeleteFolderAction;
 use TomatoPHP\FilamentMediaManager\Resources\Actions\EditCurrentFolderAction;
+use TomatoPHP\FilamentMediaManager\Resources\Actions\MoveFolderAction;
 use TomatoPHP\FilamentMediaManager\Resources\FolderResource;
 use TomatoPHP\FilamentMediaManager\Resources\MediaResource;
+use TomatoPHP\FilamentMediaManager\Services\FolderMover;
 use TomatoPHP\FilamentMediaManager\Services\MediaMover;
 
 class ListMedia extends ManageRecords
@@ -74,6 +76,7 @@ class ListMedia extends ManageRecords
                     CreateMediaAction::make($folder_id),
                     CreateSubFolderAction::make($folder_id),
                     DeleteFolderAction::make($folder_id),
+                    MoveFolderAction::make($folder_id),
                     EditCurrentFolderAction::make($folder_id),
                 ];
             } else {
@@ -84,6 +87,7 @@ class ListMedia extends ManageRecords
                 CreateMediaAction::make($folder_id),
                 CreateSubFolderAction::make($folder_id),
                 DeleteFolderAction::make($folder_id),
+                MoveFolderAction::make($folder_id),
                 EditCurrentFolderAction::make($folder_id),
             ];
         }
@@ -183,6 +187,21 @@ class ListMedia extends ManageRecords
             ->send();
 
         $this->deselectAllTableRecords();
+    }
+
+    /**
+     * A sub folder of the open folder dropped on another folder, or on the folders list for the top level
+     */
+    public function moveFolderToFolder(int $folder, int $target): void
+    {
+        $subFolder = Folder::query()
+            ->where('model_type', Folder::class)
+            ->where('model_id', session('folder_id'))
+            ->find($folder);
+
+        if ($subFolder) {
+            FolderMover::moveAndNotify($subFolder, $target);
+        }
     }
 
     public function editMedia(): Actions\Action

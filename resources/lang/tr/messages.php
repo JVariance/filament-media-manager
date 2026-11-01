@@ -28,6 +28,17 @@ return [
             'created_until' => 'Oluşturma tarihi (bitiş)',
         ],
         'group' => 'İçerik',
+        'actions' => [
+            'move' => [
+                'label' => 'Klasörü taşı',
+                'target' => 'Taşınacak yer',
+                'top_level' => 'En üst düzey',
+            ],
+        ],
+        'notifications' => [
+            'moved' => ':folder, :target klasörüne taşındı',
+            'moved_to_top_level' => ':folder en üst düzeye taşındı',
+        ],
     ],
     'media' => [
         'title' => 'Medya',
