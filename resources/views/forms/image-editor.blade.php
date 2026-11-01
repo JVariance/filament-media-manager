@@ -19,6 +19,8 @@
             size: null,
             error: null,
             isSaving: false,
+            isDraggingStraighten: false,
+            observer: null,
 
             async init() {
                 if (! document.querySelector('link[data-media-manager-cropper]')) {
@@ -39,16 +41,40 @@
                     })
                 }
 
+                // Cropper.js measures its frame once; while the modal opens, the frame may have no size yet
+                await new Promise((resolve) => {
+                    const wait = () => this.$refs.frame.offsetWidth ? resolve() : requestAnimationFrame(wait)
+
+                    wait()
+                })
+
                 this.cropper = new window.Cropper(this.$refs.image, {
                     viewMode: 1,
                     autoCropArea: 1,
                     dragMode: 'crop',
                     crop: (event) => this.size = { width: Math.round(event.detail.width), height: Math.round(event.detail.height) },
                 })
+
+                // It only follows the window by itself, not the modal
+                this.observer = new ResizeObserver(() => this.cropper?.resize())
+                this.observer.observe(this.$refs.frame)
             },
 
             destroy() {
+                this.observer?.disconnect()
                 this.cropper?.destroy()
+            },
+
+            // Dragged with the pointer, the slider snaps to 0° near it; with the arrow keys, every step counts
+            setStraighten(value) {
+                value = Number(value)
+
+                if (this.isDraggingStraighten && (Math.abs(value) < 1)) {
+                    value = 0
+                }
+
+                this.straighten = value
+                this.cropper.rotateTo(this.rotation + value)
             },
 
             setRatio(ratio) {
@@ -129,7 +155,7 @@
         style="display: grid; gap: 0.75rem;"
     >
         {{-- Cropper.js replaces the image with its own elements, which Livewire must leave alone --}}
-        <div wire:ignore style="height: 60vh; overflow: hidden; border-radius: 0.5rem; background-color: var(--gray-100);">
+        <div x-ref="frame" wire:ignore style="height: 60vh; overflow: hidden; border-radius: 0.5rem; background-color: var(--gray-100);">
             <img x-ref="image" src="{{ $getSourceUrl() }}" alt="" style="display: block; max-width: 100%;" />
         </div>
 
@@ -166,8 +192,24 @@
 
             <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--gray-500);">
                 {{ trans('filament-media-manager::messages.media.editor.straighten') }}
-                <input type="range" min="-45" max="45" step="0.5" x-model="straighten" x-on:input="cropper.rotateTo(rotation + Number(straighten))" style="width: 8rem; accent-color: var(--primary-500);" />
-                <span x-text="`${straighten}°`" style="min-width: 3rem;"></span>
+                <input
+                    type="range"
+                    min="-45"
+                    max="45"
+                    step="0.5"
+                    x-bind:value="straighten"
+                    x-on:pointerdown="isDraggingStraighten = true"
+                    x-on:pointerup.window="isDraggingStraighten = false"
+                    x-on:input="setStraighten($event.target.value)"
+                    style="width: 10rem; accent-color: var(--primary-500);"
+                />
+                <button
+                    type="button"
+                    x-text="`${straighten}°`"
+                    x-on:click="setStraighten(0)"
+                    title="0°"
+                    style="min-width: 3rem; text-align: start; cursor: pointer;"
+                ></button>
             </label>
 
             <span x-show="size" x-text="size && `${size.width} × ${size.height} px`" style="font-size: 0.875rem; color: var(--gray-500);"></span>
