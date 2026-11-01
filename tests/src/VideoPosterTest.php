@@ -5,6 +5,7 @@ namespace TomatoPHP\FilamentMediaManager\Tests;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
+use TomatoPHP\FilamentMediaManager\Form\VideoPosterPicker;
 use TomatoPHP\FilamentMediaManager\Models\Folder;
 use TomatoPHP\FilamentMediaManager\Models\Media;
 use TomatoPHP\FilamentMediaManager\Resources\MediaResource;
@@ -79,6 +80,35 @@ it('stores a frame or image sent as the poster of a video', function () {
     Livewire::withQueryParams(['folder_id' => $this->folder->id])
         ->test(ListMedia::class)
         ->assertSeeHtml('poster="' . $video->getPosterUrl() . '"');
+});
+
+it('stores a poster uploaded by the browser to the file attachments, as the picker does', function () {
+    $video = uploadVideo($this->folder);
+
+    Livewire::withQueryParams(['folder_id' => $this->folder->id])
+        ->test(ListMedia::class)
+        ->mountAction('editMedia', ['record' => ['id' => $video->id]])
+        ->set('componentFileAttachments.mountedActions.0.data.poster', posterUpload('jpeg'))
+        ->setActionData(['poster' => VideoPosterPicker::UPLOADED])
+        ->callMountedAction()
+        ->assertHasNoActionErrors();
+
+    expect(posterFiles($video->refresh()))->toHaveCount(1)
+        ->and(posterFiles($video)[0])->toEndWith('.jpg');
+});
+
+it('rejects a file uploaded to the attachments that is not an image', function () {
+    $video = uploadVideo($this->folder);
+
+    Livewire::withQueryParams(['folder_id' => $this->folder->id])
+        ->test(ListMedia::class)
+        ->mountAction('editMedia', ['record' => ['id' => $video->id]])
+        ->set('componentFileAttachments.mountedActions.0.data.poster', UploadedFile::fake()->createWithContent('poster.jpg', 'not an image'))
+        ->setActionData(['poster' => VideoPosterPicker::UPLOADED])
+        ->callMountedAction()
+        ->assertHasActionErrors(['poster']);
+
+    expect(posterFiles($video->refresh()))->toBe([]);
 });
 
 it('takes a poster larger than a Livewire request may be', function () {
