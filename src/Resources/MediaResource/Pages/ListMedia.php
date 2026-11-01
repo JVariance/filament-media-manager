@@ -28,6 +28,7 @@ use TomatoPHP\FilamentMediaManager\Services\FocalPoint;
 use TomatoPHP\FilamentMediaManager\Services\FolderBreadcrumbs;
 use TomatoPHP\FilamentMediaManager\Services\FolderMover;
 use TomatoPHP\FilamentMediaManager\Services\ImageEditor;
+use TomatoPHP\FilamentMediaManager\Services\MediaDownload;
 use TomatoPHP\FilamentMediaManager\Services\MediaMover;
 use TomatoPHP\FilamentMediaManager\Services\VideoPoster;
 
@@ -226,6 +227,24 @@ class ListMedia extends ManageRecords
         if ($subFolder) {
             FolderMover::moveAndNotify($subFolder, $target);
         }
+    }
+
+    /**
+     * The file of the medium in the details; the signed URL is made on the click, so it does not expire on the page
+     */
+    public function downloadMedia(): Actions\Action
+    {
+        return Actions\Action::make('downloadMedia')
+            ->label(trans('filament-media-manager::messages.media.actions.download.label'))
+            ->icon('heroicon-s-arrow-down-tray')
+            ->color('gray')
+            ->action(function (array $arguments): void {
+                $media = Media::find($arguments['record']['id'] ?? null);
+
+                if ($media) {
+                    $this->redirect(MediaDownload::url([$media]));
+                }
+            });
     }
 
     public function editMedia(): Actions\Action

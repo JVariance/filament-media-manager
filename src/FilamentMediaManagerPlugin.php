@@ -6,6 +6,7 @@ use Filament\Contracts\Plugin;
 use Filament\Panel;
 use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
+use TomatoPHP\FilamentMediaManager\Http\Controllers\MediaDownloadController;
 use TomatoPHP\FilamentMediaManager\Http\Controllers\MediaSourceController;
 use TomatoPHP\FilamentMediaManager\Livewire\MediaPicker;
 use TomatoPHP\FilamentMediaManager\Resources\FolderResource;
@@ -166,6 +167,10 @@ class FilamentMediaManagerPlugin implements Plugin
             Route::get('media-manager/media/{media}/source', MediaSourceController::class)
                 ->whereNumber('media')
                 ->name('media-manager.media.source');
+
+            Route::get('media-manager/media/download', MediaDownloadController::class)
+                ->middleware('signed')
+                ->name('media-manager.media.download');
         });
     }
 

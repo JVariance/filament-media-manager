@@ -65,6 +65,7 @@ finally, register the plugin on `/app/Providers/Filament/AdminPanelProvider.php`
 - 🎯 Focal points for images and videos, kept in view where they are cropped
 - ✂️ Image editor: crop, rotate, straighten, flip and zoom, saved in place or as a copy
 - 🔤 Web-safe file names for uploads, and a command to rename the files of existing media
+- ⬇️ Download a medium, or several selected ones as a zip file
 - 🔒 Set password for folders with secure access
 - 📝 Upload Files with Custom Fields using `->schema()`
 - 🤖 Auto Create Folders for Model/Collection/Record
@@ -520,6 +521,10 @@ php artisan filament-media-manager:web-safe-file-names --redirects=apache
 ```
 
 `--dry-run` only shows the new names. A renamed file has a new URL: references by the medium's id or UUID (like the picker's) still work, but a URL written into a text or linked from elsewhere does not. `--redirects=apache` prints `Redirect 301` lines for an `.htaccess`, `--redirects=nginx` prints `location` blocks, and `--redirects=laravel` prints `Route::permanentRedirect()` lines for `routes/web.php` (the web server passes a missing file on to Laravel, and Laravel's own storage route comes after the app's routes). Every renamed file also dispatches `TomatoPHP\FilamentMediaManager\Events\MediaFileRenamed` with its old and new URL, to add redirects in your app.
+
+## Download Media
+
+The media details have a "Download" action, and the selected media a "Download" bulk action: one file is downloaded as itself, several as a zip file named after the folder (files with the same name are kept apart). The browser is sent to a signed panel route that streams the file or zip, so a large one is not held in memory; the link is made on the click and valid for ten minutes. If your plugin class overrides `register()`, call `$this->registerRoutes($panel)` in it.
 
 ## Allow User Access
 

@@ -79,6 +79,9 @@ return [
                 'label' => 'Переместить в папку',
                 'folder' => 'Папка',
             ],
+            'download' => [
+                'label' => 'Скачать',
+            ],
         ],
         'notifications' => [
             'create-media' => 'Медиа создано успешно',

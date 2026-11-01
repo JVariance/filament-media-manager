@@ -79,6 +79,9 @@ return [
                 'label' => 'In Ordner verschieben',
                 'folder' => 'Ordner',
             ],
+            'download' => [
+                'label' => 'Herunterladen',
+            ],
         ],
         'notifications' => [
             'create-media' => 'Medien hinzugefügt',
