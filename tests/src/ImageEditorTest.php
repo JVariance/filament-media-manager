@@ -88,7 +88,7 @@ it('replaces the image with the edited one and keeps its original', function () 
         ->and(storedSize($image))->toBe([50, 40, 'image/jpeg'])
         ->and(storedSize($image, $image->id . '/originals/' . $file))->toBe([120, 80, 'image/jpeg'])
         ->and($image->size)->toBe(strlen(Storage::disk('public')->get($image->getPathRelativeToRoot())))
-        ->and($image->custom_properties)->toMatchArray(['width' => 50, 'height' => 40, 'original' => true])
+        ->and($image->custom_properties)->toMatchArray(['width' => 50, 'height' => 40, 'original' => $file])
         ->and($image->hasCustomProperty('focal'))->toBeFalse()
         ->and($image->getVersionedUrl())->not->toBe($url);
 
@@ -116,6 +116,28 @@ it('keeps the first original over several edits and restores it', function () {
     expect(storedSize($image))->toBe([120, 80, 'image/jpeg'])
         ->and(ImageEditor::hasOriginal($image))->toBeFalse()
         ->and(Storage::disk('public')->exists($image->id . '/originals'))->toBeFalse();
+});
+
+it('finds the original after the file of the image was renamed', function () {
+    $image = editableImage($this->folder);
+    saveEdited($this->folder, $image, imageContents(60, 60));
+
+    // As Spatie does when the file name changes
+    $image->refresh();
+    Storage::disk('public')->move($image->getPathRelativeToRoot(), "{$image->id}/renamed.jpg");
+    $image->forceFill(['file_name' => 'renamed.jpg'])->save();
+
+    expect(ImageEditor::restoreOriginal($image))->toBeTrue()
+        ->and(storedSize($image->refresh()))->toBe([120, 80, 'image/jpeg']);
+});
+
+it('finds an original kept before its file name was stored', function () {
+    $image = editableImage($this->folder);
+    saveEdited($this->folder, $image, imageContents(60, 60));
+    $image->refresh()->setCustomProperty('original', true)->save();
+
+    expect(ImageEditor::restoreOriginal($image))->toBeTrue()
+        ->and(storedSize($image->refresh()))->toBe([120, 80, 'image/jpeg']);
 });
 
 it('saves the edited image as a copy next to the image', function () {
