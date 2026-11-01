@@ -84,6 +84,17 @@ it('leaves a video without dimensions when ffprobe is missing or fails', functio
         ->and($media->refresh()->hasCustomProperty('width'))->toBeFalse();
 });
 
+it('finds ffprobe where FFmpeg is usually installed when PHP runs without a PATH', function () {
+    $path = getenv('PATH');
+    putenv('PATH=');
+
+    try {
+        expect(MediaDimensions::ffprobe())->toBeIn(['/opt/homebrew/bin/ffprobe', '/usr/local/bin/ffprobe', '/usr/bin/ffprobe']);
+    } finally {
+        putenv("PATH={$path}");
+    }
+})->skip(fn () => ! array_filter(['/opt/homebrew/bin/ffprobe', '/usr/local/bin/ffprobe', '/usr/bin/ffprobe'], 'is_file'), 'ffprobe is not installed');
+
 it('measures a real video with ffprobe', function () {
     $file = tempnam(sys_get_temp_dir(), 'video') . '.mp4';
     exec('ffmpeg -v error -f lavfi -i color=c=red:s=64x36:d=1 -pix_fmt yuv420p ' . escapeshellarg($file), result_code: $code);
