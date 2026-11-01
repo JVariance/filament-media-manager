@@ -70,27 +70,11 @@ class VideoPoster
     }
 
     /**
-     * Store an image sent by the browser as a data URL, e.g. a frame of the video drawn on a canvas
+     * Whether the contents are a JPEG, PNG or WebP image
      */
-    public static function storeDataUrl(Media $media, string $dataUrl): bool
+    public static function isImage(string $contents): bool
     {
-        $contents = static::decodeDataUrl($dataUrl);
-
-        return $contents !== null && static::store($media, $contents);
-    }
-
-    /**
-     * The image in a data URL, null when it is not a JPEG, PNG or WebP image
-     */
-    public static function decodeDataUrl(string $dataUrl): ?string
-    {
-        if (! preg_match('/^data:image\/[a-z]+;base64,(.+)$/s', $dataUrl, $matches)) {
-            return null;
-        }
-
-        $contents = base64_decode($matches[1], strict: true);
-
-        return ($contents !== false) && static::extension($contents) ? $contents : null;
+        return static::extension($contents) !== null;
     }
 
     public static function remove(Media $media, bool $save = true): void

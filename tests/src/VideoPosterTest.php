@@ -35,15 +35,20 @@ function uploadVideo(Folder $folder): Media
     return Media::query()->withoutGlobalScopes()->findOrFail($media->getKey());
 }
 
-function posterDataUrl(string $type = 'png'): string
+function posterImage(string $type = 'png', int $width = 32, int $height = 18): string
 {
-    $image = imagecreatetruecolor(32, 18);
+    $image = imagecreatetruecolor($width, $height);
     imagefill($image, 0, 0, imagecolorallocate($image, 200, 40, 40));
 
     ob_start();
     $type === 'png' ? imagepng($image) : imagejpeg($image);
 
-    return 'data:image/' . $type . ';base64,' . base64_encode((string) ob_get_clean());
+    return (string) ob_get_clean();
+}
+
+function posterUpload(string $type = 'png'): UploadedFile
+{
+    return UploadedFile::fake()->createWithContent("poster.{$type}", posterImage($type));
 }
 
 function editVideo(Folder $folder, Media $media, mixed $poster)
@@ -63,7 +68,7 @@ function posterFiles(Media $media): array
 it('stores a frame or image sent as the poster of a video', function () {
     $video = uploadVideo($this->folder);
 
-    editVideo($this->folder, $video, posterDataUrl())->assertHasNoActionErrors();
+    editVideo($this->folder, $video, posterUpload())->assertHasNoActionErrors();
 
     $video->refresh();
 
@@ -76,9 +81,30 @@ it('stores a frame or image sent as the poster of a video', function () {
         ->assertSeeHtml('poster="' . $video->getPosterUrl() . '"');
 });
 
+it('takes a poster larger than a Livewire request may be', function () {
+    $video = uploadVideo($this->folder);
+
+    // Noise compresses badly, so the image is larger than the payload limit of 1 MB
+    $image = imagecreatetruecolor(1920, 1080);
+
+    for ($i = 0; $i < 400000; $i++) {
+        imagesetpixel($image, random_int(0, 1919), random_int(0, 1079), random_int(0, 0xFFFFFF));
+    }
+
+    ob_start();
+    imagepng($image);
+    $contents = (string) ob_get_clean();
+
+    expect(strlen($contents))->toBeGreaterThan(config('livewire.payload.max_size', 1024 * 1024));
+
+    editVideo($this->folder, $video, UploadedFile::fake()->createWithContent('poster.png', $contents))->assertHasNoActionErrors();
+
+    expect(posterFiles($video->refresh()))->toHaveCount(1);
+});
+
 it('shows the current poster in the form and keeps it when saved unchanged', function () {
     $video = uploadVideo($this->folder);
-    VideoPoster::storeDataUrl($video, posterDataUrl());
+    VideoPoster::store($video, posterImage());
     $url = $video->refresh()->getPosterUrl();
 
     Livewire::withQueryParams(['folder_id' => $this->folder->id])
@@ -93,10 +119,10 @@ it('shows the current poster in the form and keeps it when saved unchanged', fun
 
 it('replaces the poster and removes the old image', function () {
     $video = uploadVideo($this->folder);
-    VideoPoster::storeDataUrl($video, posterDataUrl());
+    VideoPoster::store($video, posterImage());
     $old = posterFiles($video->refresh())[0];
 
-    editVideo($this->folder, $video, posterDataUrl('jpeg'));
+    editVideo($this->folder, $video, posterUpload('jpeg'));
 
     expect(posterFiles($video->refresh()))->toHaveCount(1)
         ->and(posterFiles($video)[0])->not->toBe($old)->toEndWith('.jpg');
@@ -104,7 +130,7 @@ it('replaces the poster and removes the old image', function () {
 
 it('removes the poster', function () {
     $video = uploadVideo($this->folder);
-    VideoPoster::storeDataUrl($video, posterDataUrl());
+    VideoPoster::store($video, posterImage());
 
     editVideo($this->folder, $video, null);
 
@@ -117,7 +143,7 @@ it('removes the poster', function () {
 it('rejects a poster that is not an image', function () {
     $video = uploadVideo($this->folder);
 
-    editVideo($this->folder, $video, 'data:image/png;base64,' . base64_encode('<svg onload="alert(1)"></svg>'))
+    editVideo($this->folder, $video, UploadedFile::fake()->createWithContent('poster.png', '<svg onload="alert(1)"></svg>'))
         ->assertHasActionErrors(['poster']);
 
     expect($video->refresh()->getPosterUrl())->toBeNull()
@@ -135,7 +161,7 @@ it('offers a poster only for videos', function () {
 
 it('removes the poster with the video', function () {
     $video = uploadVideo($this->folder);
-    VideoPoster::storeDataUrl($video, posterDataUrl());
+    VideoPoster::store($video, posterImage());
 
     Livewire::withQueryParams(['folder_id' => $this->folder->id])
         ->test(ListMedia::class)

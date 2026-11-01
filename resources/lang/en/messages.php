@@ -88,6 +88,7 @@ return [
             'not_ready' => 'The video is not loaded yet, start it or wait a moment.',
             'capture_failed' => 'The frame could not be taken from this video. Upload an image instead.',
             'invalid' => 'The poster must be a JPEG, PNG or WebP image.',
+            'upload_failed' => 'The image could not be uploaded. Try again.',
         ],
     ],
     'picker' => [
