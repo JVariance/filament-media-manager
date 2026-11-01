@@ -63,11 +63,16 @@ return [
             'edit' => [
                 'label' => 'Klasörü Düzenle',
             ],
+            'move' => [
+                'label' => 'Klasöre taşı',
+                'folder' => 'Klasör',
+            ],
         ],
         'notifications' => [
             'create-media' => 'Medya başarıyla oluşturuldu',
             'delete-folder' => 'Klasör başarıyla silindi',
             'edit-folder' => 'Klasör başarıyla düzenlendi',
+            'moved' => '{0} Hiçbir medya taşınmadı|{1} 1 medya :folder klasörüne taşındı|[2,*] :count medya :folder klasörüne taşındı',
         ],
         'meta' => [
             'model' => 'Model',

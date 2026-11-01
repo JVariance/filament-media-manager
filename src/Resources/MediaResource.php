@@ -12,7 +12,9 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use TomatoPHP\FilamentMediaManager\Models\Folder;
 use TomatoPHP\FilamentMediaManager\Models\Media;
+use TomatoPHP\FilamentMediaManager\Resources\Actions\MoveMediaBulkAction;
 use TomatoPHP\FilamentMediaManager\Resources\MediaResource\Pages;
+use TomatoPHP\FilamentMediaManager\Services\MediaMover;
 
 class MediaResource extends Resource
 {
@@ -204,7 +206,9 @@ class MediaResource extends Resource
             ])
             ->toolbarActions([
                 Actions\BulkActionGroup::make([
-                    Actions\DeleteBulkAction::make(),
+                    MoveMediaBulkAction::make(),
+                    Actions\DeleteBulkAction::make()
+                        ->visible(fn (): bool => ($folder = Folder::query()->find(session('folder_id'))) && MediaMover::canManage($folder)),
                 ]),
             ]);
     }
