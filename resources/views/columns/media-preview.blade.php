@@ -134,7 +134,7 @@
 
 <div class="table-media-preview {{ str($getRecord()->mime_type)->contains(['image', 'video']) ? 'table-media-preview-with-bg' : '' }}">
     @if(str($getRecord()->mime_type)->contains('image'))
-        <img src="{{ $getRecord()->getUrl() }}" alt="{{ $getRecord()->name }}" style="{{ \TomatoPHP\FilamentMediaManager\Services\FocalPoint::style($getRecord()) }}" />
+        <img src="{{ $getRecord()->getVersionedUrl() }}" alt="{{ $getRecord()->name }}" style="{{ \TomatoPHP\FilamentMediaManager\Services\FocalPoint::style($getRecord()) }}" />
     @elseif(str($getRecord()->mime_type)->contains('video'))
         <video src="{{ $getRecord()->getUrl() }}" style="{{ \TomatoPHP\FilamentMediaManager\Services\FocalPoint::style($getRecord()) }}" @if($poster = \TomatoPHP\FilamentMediaManager\Services\VideoPoster::url($getRecord())) poster="{{ $poster }}" @endif preload="metadata"></video>
     @elseif(str($getRecord()->mime_type)->contains('audio'))

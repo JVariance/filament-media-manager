@@ -15,6 +15,16 @@ class Media extends \Spatie\MediaLibrary\MediaCollections\Models\Media
         return VideoPoster::url($this);
     }
 
+    /**
+     * The URL with the time of the last change, so that a browser loads an edited image again
+     */
+    public function getVersionedUrl(): string
+    {
+        $url = $this->getUrl();
+
+        return $url . (str_contains($url, '?') ? '&' : '?') . 'v=' . $this->updated_at?->timestamp;
+    }
+
     protected static function booted(): void
     {
         static::addGlobalScope('folder', function (Builder $query) {

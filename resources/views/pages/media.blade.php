@@ -444,7 +444,7 @@
                         <div class="media-preview {{ str($item->mime_type)->contains(['image', 'video']) ? 'media-preview-with-bg' : '' }}"
                              x-data>
                             @if(str($item->mime_type)->contains('image'))
-                                <img src="{{ $item->getUrl() }}" alt="{{ $title }}" style="{{ \TomatoPHP\FilamentMediaManager\Services\FocalPoint::style($item) }}" />
+                                <img src="{{ $item->getVersionedUrl() }}" alt="{{ $title }}" style="{{ \TomatoPHP\FilamentMediaManager\Services\FocalPoint::style($item) }}" />
                             @elseif(str($item->mime_type)->contains('video'))
                                 <video src="{{ $item->getUrl() }}" style="{{ \TomatoPHP\FilamentMediaManager\Services\FocalPoint::style($item) }}" @if($poster = \TomatoPHP\FilamentMediaManager\Services\VideoPoster::url($item)) poster="{{ $poster }}" @endif preload="metadata"></video>
                             @elseif(str($item->mime_type)->contains('audio'))
@@ -501,7 +501,7 @@
 
                         @if(str($item->mime_type)->contains('image'))
                             <div class="media-preview-link" x-data="{ fullscreen: false }">
-                                <img src="{{ $item->getUrl() }}" alt="{{ $title }}" @click="fullscreen = true" style="cursor: zoom-in;" />
+                                <img src="{{ $item->getVersionedUrl() }}" alt="{{ $title }}" @click="fullscreen = true" style="cursor: zoom-in;" />
 
                                 <!-- Fullscreen Image Modal -->
                                 <div x-show="fullscreen"
@@ -512,7 +512,7 @@
                                      x-cloak
                                      style="display: none;"
                                      x-bind:style="fullscreen && 'display: flex !important;'">
-                                    <img src="{{ $item->getUrl() }}"
+                                    <img src="{{ $item->getVersionedUrl() }}"
                                          alt="{{ $title }}"
                                          style="max-width: 95%; max-height: 95vh; object-fit: contain; cursor: zoom-out;"
                                          @click.stop />
@@ -640,12 +640,14 @@
                         @if($currentFolder->user_id === auth()->user()->id && $currentFolder->user_type === get_class(auth()->user()))
                             <x-slot name="footer">
                                 {{ ($this->editMedia)(['record' => $item]) }}
+                                {{ ($this->editImage)(['record' => $item]) }}
                                 {{ ($this->deleteMedia)(['record' => $item]) }}
                             </x-slot>
                         @endif
                     @else
                         <x-slot name="footer">
                             {{ ($this->editMedia)(['record' => $item]) }}
+                            {{ ($this->editImage)(['record' => $item]) }}
                             {{ ($this->deleteMedia)(['record' => $item]) }}
                         </x-slot>
                     @endif

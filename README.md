@@ -56,6 +56,7 @@ finally, register the plugin on `/app/Providers/Filament/AdminPanelProvider.php`
 - 📂 Create folders and subfolders
 - 🎞️ Poster images for videos, taken from a frame or uploaded
 - 🎯 Focal points for images and videos, kept in view where they are cropped
+- ✂️ Image editor: crop, rotate, straighten, flip and zoom, saved in place or as a copy
 - 🔒 Set password for folders with secure access
 - 📝 Upload Files with Custom Fields using `->schema()`
 - 🤖 Auto Create Folders for Model/Collection/Record
@@ -449,6 +450,16 @@ When editing an image or a video, click on its most important spot to set the fo
 ```
 
 `FocalPoint::get($media)` gives the point itself, null for the center.
+
+## Image Editor
+
+JPEG, PNG and WebP images have an "Edit image" action in the media details, built on [Cropper.js](https://github.com/fengyuanchen/cropperjs): crop freely or to an aspect ratio (original, 1:1, 4:3, 3:2, 16:9, 3:4, 9:16), rotate in steps of 90°, straighten by up to 45°, flip horizontally or vertically, zoom and move the image. The browser draws the result in the image's type and uploads it as a file.
+
+"Save" replaces the image and keeps its file name, so every link and reference to it stays valid. The first time an image is edited, its original is kept (`{media directory}/originals/`), and "Restore original" brings it back. "Save as copy" adds the edited image next to it instead, with its title, description and alt text.
+
+After an image is replaced, its stored width and height follow it, its focal point is removed (it was set on the old image), and its conversions and responsive images are made again. Listen to `TomatoPHP\FilamentMediaManager\Events\MediaFileReplaced` to renew anything else made from the file. Since the URL stays the same, the media manager adds the time of the change to it (`$media->getVersionedUrl()`); do the same where your frontend caches images for long.
+
+Cropper.js is registered as a Filament asset; run `php artisan filament:assets` after updating (Laravel apps usually do with `filament:upgrade` after `composer update`).
 
 ## Allow User Access
 

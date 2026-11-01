@@ -3,10 +3,10 @@
 namespace TomatoPHP\FilamentMediaManager\Form;
 
 use Closure;
-use Filament\Forms\Components\Concerns\HasFileAttachments;
 use Filament\Forms\Components\Field;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use TomatoPHP\FilamentMediaManager\Form\Concerns\ReceivesBrowserUploads;
 use TomatoPHP\FilamentMediaManager\Services\VideoPoster;
 
 /**
@@ -18,13 +18,7 @@ use TomatoPHP\FilamentMediaManager\Services\VideoPoster;
  */
 class VideoPosterPicker extends Field
 {
-    // Filament accepts uploads from the browser only for file upload fields and fields with file attachments
-    use HasFileAttachments;
-
-    /**
-     * The state once the browser has uploaded a new image, to componentFileAttachments like a rich editor does
-     */
-    public const UPLOADED = 'uploaded';
+    use ReceivesBrowserUploads;
 
     protected string $view = 'filament-media-manager::forms.video-poster-picker';
 
@@ -40,7 +34,7 @@ class VideoPosterPicker extends Field
             $component->state($media ? VideoPoster::url($media) : null);
         });
 
-        $this->fileAttachmentsAcceptedFileTypes(['image/jpeg', 'image/png', 'image/webp']);
+        $this->setUpBrowserUploads();
 
         $this->rule(fn (VideoPosterPicker $component): Closure => function (string $attribute, mixed $value, Closure $fail) use ($component): void {
             $file = $component->getUpload($value);
@@ -49,25 +43,6 @@ class VideoPosterPicker extends Field
                 $fail(trans('filament-media-manager::messages.media.poster.invalid'));
             }
         });
-
-        $this->dehydrateStateUsing(fn (VideoPosterPicker $component, mixed $state): mixed => $component->getUpload($state) ?: $state);
-    }
-
-    /**
-     * The image the browser uploaded for the state: false when it is not one of the accepted images, null when the
-     * state holds no new image
-     */
-    public function getUpload(mixed $state): TemporaryUploadedFile | false | null
-    {
-        if ($state instanceof TemporaryUploadedFile) {
-            return $state;
-        }
-
-        if ($state !== static::UPLOADED) {
-            return null;
-        }
-
-        return $this->getUploadedFileAttachment() ?? false;
     }
 
     public function media(Media | Closure | null $media): static
