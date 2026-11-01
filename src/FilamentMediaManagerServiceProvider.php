@@ -2,6 +2,7 @@
 
 namespace TomatoPHP\FilamentMediaManager;
 
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 use Spatie\MediaLibrary\MediaCollections\Models\Observers\MediaObserver;
@@ -10,6 +11,7 @@ use TomatoPHP\FilamentMediaManager\Livewire\FolderComponent;
 use TomatoPHP\FilamentMediaManager\Livewire\MediaPicker;
 use TomatoPHP\FilamentMediaManager\Models\Media;
 use TomatoPHP\FilamentMediaManager\Services\FilamentMediaManagerServices;
+use TomatoPHP\FilamentMediaManager\Services\VideoPoster;
 
 class FilamentMediaManagerServiceProvider extends ServiceProvider
 {
@@ -76,5 +78,11 @@ class FilamentMediaManagerServiceProvider extends ServiceProvider
             ->unique()
             ->reject(fn (string $model): bool => $model === config('media-library.media_model'))
             ->each(fn (string $model) => $model::observe($this->app->make($observer)));
+
+        // A video's poster is stored next to it; Spatie only removes the video's own files
+        collect([Media::class, config('filament-media-manager.model.media'), config('media-library.media_model')])
+            ->filter()
+            ->unique()
+            ->each(fn (string $model) => Event::listen("eloquent.deleting: {$model}", fn ($media) => VideoPoster::remove($media, save: false)));
     }
 }

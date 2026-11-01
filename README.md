@@ -60,6 +60,7 @@ finally, register the plugin on `/app/Providers/Filament/AdminPanelProvider.php`
 - ☑️ Select several media and move or delete them at once
 - 🖱️ Drag media onto a folder or a folder in the breadcrumbs to move them
 - 🗂️ Move folders into other folders or up to the top level
+- 🎞️ Poster images for videos, taken from a frame or uploaded
 - 🔒 Set password for folders with secure access
 - 📝 Upload Files with Custom Fields using `->schema()`
 - 🤖 Auto Create Folders for Model/Collection/Record
@@ -443,6 +444,20 @@ Media can also be dragged onto a sub folder or onto a folder in the breadcrumbs;
 ## Move Folders
 
 With `allowSubFolders()`, a folder can be moved into another folder or up to the top level: drag a sub folder onto another folder or onto a folder in the breadcrumbs (onto the folders list for the top level), drag a folder in the folders list onto another one, or use the "Move folder" action of the open folder. Its media move along, the media of its own sub folders stay with it. The same folders take part as for moving media, and a folder never moves into itself or one of its sub folders.
+
+## Video Posters
+
+When editing a video in the media details, a poster image can be set: play or seek the video and take the frame on screen, or upload a JPEG, PNG or WebP image. The poster is shown before the video plays, in the media list, the picker and the table.
+
+The image is stored next to the video (`{media directory}/posters/`), its file name in the custom property `poster`, and it is removed together with the video. In your frontend:
+
+```blade
+<video src="{{ $media->getUrl() }}" poster="{{ \TomatoPHP\FilamentMediaManager\Services\VideoPoster::url($media) }}" controls></video>
+```
+
+The package's `Media` model also has `$media->getPosterUrl()`.
+
+To take a frame, the browser has to load the video from the panel's own origin, so the plugin registers an authenticated panel route that serves it (with range requests for seeking). If your plugin class overrides `register()`, call `$this->registerRoutes($panel)` in it.
 
 ## Allow User Access
 

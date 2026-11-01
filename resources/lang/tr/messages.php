@@ -95,5 +95,15 @@ return [
             'url' => 'URL',
             'delete-media' => 'Medya Sil',
         ],
+        'poster' => [
+            'label' => 'Kapak görseli',
+            'capture' => 'Mevcut kareyi kullan',
+            'upload' => 'Görsel yükle',
+            'remove' => 'Kaldır',
+            'none' => 'Kapak görseli yok: tarayıcı ilk kareyi gösterir.',
+            'not_ready' => 'Video henüz yüklenmedi, başlatın veya biraz bekleyin.',
+            'capture_failed' => 'Bu videodan kare alınamadı. Bunun yerine bir görsel yükleyin.',
+            'invalid' => 'Kapak görseli JPEG, PNG veya WebP olmalıdır.',
+        ],
     ],
 ];
