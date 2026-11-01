@@ -716,12 +716,19 @@
                     @if(filament('filament-media-manager')->allowUserAccess && (!empty($currentFolder->user_id)))
                         @if($currentFolder->user_id === auth()->user()->id && $currentFolder->user_type === get_class(auth()->user()))
                             <x-slot name="footer">
+                                {{ ($this->downloadMedia)(['record' => $item]) }}
                                 {{ ($this->editMedia)(['record' => $item]) }}
                                 {{ ($this->deleteMedia)(['record' => $item]) }}
+                            </x-slot>
+                        @else
+                            {{-- Downloading only reads the file, so it is offered in folders of other users too --}}
+                            <x-slot name="footer">
+                                {{ ($this->downloadMedia)(['record' => $item]) }}
                             </x-slot>
                         @endif
                     @else
                         <x-slot name="footer">
+                            {{ ($this->downloadMedia)(['record' => $item]) }}
                             {{ ($this->editMedia)(['record' => $item]) }}
                             {{ ($this->deleteMedia)(['record' => $item]) }}
                         </x-slot>

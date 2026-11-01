@@ -64,6 +64,9 @@ return [
                 'label' => 'نقل إلى مجلد',
                 'folder' => 'المجلد',
             ],
+            'download' => [
+                'label' => 'تنزيل',
+            ],
         ],
         'notifications' => [
             'create-media' => 'تم إنشاء الوسائط بنجاح',

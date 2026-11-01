@@ -67,6 +67,9 @@ return [
                 'label' => 'Move to folder',
                 'folder' => 'Folder',
             ],
+            'download' => [
+                'label' => 'Download',
+            ],
         ],
         'notifications' => [
             'create-media' => 'Media created successfully',

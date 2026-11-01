@@ -67,6 +67,9 @@ return [
                 'label' => 'Klasöre taşı',
                 'folder' => 'Klasör',
             ],
+            'download' => [
+                'label' => 'İndir',
+            ],
         ],
         'notifications' => [
             'create-media' => 'Medya başarıyla oluşturuldu',

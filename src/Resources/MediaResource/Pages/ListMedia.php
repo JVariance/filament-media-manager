@@ -17,6 +17,7 @@ use TomatoPHP\FilamentMediaManager\Resources\Actions\DeleteFolderAction;
 use TomatoPHP\FilamentMediaManager\Resources\Actions\EditCurrentFolderAction;
 use TomatoPHP\FilamentMediaManager\Resources\FolderResource;
 use TomatoPHP\FilamentMediaManager\Resources\MediaResource;
+use TomatoPHP\FilamentMediaManager\Services\MediaDownload;
 
 class ListMedia extends ManageRecords
 {
@@ -152,6 +153,24 @@ class ListMedia extends ManageRecords
                 }
             })
             ->view('filament-media-manager::pages.folder-action', ['item' => $item]);
+    }
+
+    /**
+     * The file of the medium in the details; the signed URL is made on the click, so it does not expire on the page
+     */
+    public function downloadMedia(): Actions\Action
+    {
+        return Actions\Action::make('downloadMedia')
+            ->label(trans('filament-media-manager::messages.media.actions.download.label'))
+            ->icon('heroicon-s-arrow-down-tray')
+            ->color('gray')
+            ->action(function (array $arguments): void {
+                $media = Media::find($arguments['record']['id'] ?? null);
+
+                if ($media) {
+                    $this->redirect(MediaDownload::url([$media]));
+                }
+            });
     }
 
     public function editMedia(): Actions\Action
