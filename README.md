@@ -59,6 +59,7 @@ finally, register the plugin on `/app/Providers/Filament/AdminPanelProvider.php`
 - 🎨 Default folder color and a color palette for the folder form
 - ☑️ Select several media and move or delete them at once
 - 🖱️ Drag media onto a folder or a folder in the breadcrumbs to move them
+- 🗂️ Move folders into other folders or up to the top level
 - 🔒 Set password for folders with secure access
 - 📝 Upload Files with Custom Fields using `->schema()`
 - 🤖 Auto Create Folders for Model/Collection/Record
@@ -438,6 +439,10 @@ In a folder, a checkbox shows on each medium when you hover it. Shift-, Cmd- or 
 Moving only changes which folder a medium is in (`model_type`, `model_id` and `collection_name`, like an upload to the target folder); the files stay where they are. Only media of folders and sub folders can be moved, and only to such folders: the media of a model's folder belong to the record, moving them out would take them away from it. With `allowUserAccess()`, media can be moved out of and into folders of the user or without an owner.
 
 Media can also be dragged onto a sub folder or onto a folder in the breadcrumbs; dragging a selected medium moves all selected media on the page.
+
+## Move Folders
+
+With `allowSubFolders()`, a folder can be moved into another folder or up to the top level: drag a sub folder onto another folder or onto a folder in the breadcrumbs (onto the folders list for the top level), drag a folder in the folders list onto another one, or use the "Move folder" action of the open folder. Its media move along, the media of its own sub folders stay with it. The same folders take part as for moving media, and a folder never moves into itself or one of its sub folders.
 
 ## Allow User Access
 

@@ -26,6 +26,17 @@ return [
             'created_until' => 'تم الإنشاء حتى',
         ],
         'group' => 'المحتوي',
+        'actions' => [
+            'move' => [
+                'label' => 'نقل المجلد',
+                'target' => 'نقل إلى',
+                'top_level' => 'المستوى الأعلى',
+            ],
+        ],
+        'notifications' => [
+            'moved' => 'تم نقل :folder إلى :target',
+            'moved_to_top_level' => 'تم نقل :folder إلى المستوى الأعلى',
+        ],
     ],
     'media' => [
         'title' => 'الوسائط',

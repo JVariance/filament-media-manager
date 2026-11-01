@@ -55,7 +55,7 @@ it('makes media draggable and the sub folders drop targets', function () {
     dropUpload($folder, 'photo');
 
     dropGallery($folder)
-        ->assertSeeHtml('x-on:dragstart="start($event')
+        ->assertSeeHtml('x-on:dragstart="startMedia($event')
         ->assertSeeHtml('data-media-drop-folder="' . $sub->id . '"')
         // The breadcrumbs and other folders are matched against these ids in the browser
         ->assertSeeHtml('data-drop-folder-ids="' . e(json_encode(dropTargetIds($folder))) . '"')
@@ -131,7 +131,7 @@ it('offers no dragging in the folder of a model record', function () {
     $target = Folder::factory()->create();
 
     dropGallery($record)
-        ->assertDontSeeHtml('x-on:dragstart="start($event')
+        ->assertDontSeeHtml('x-on:dragstart="startMedia($event')
         ->call('moveMediaToFolder', [$media->getKey()], $target->id);
 
     expect($media->refresh()->model_type)->toBe(Product::class);

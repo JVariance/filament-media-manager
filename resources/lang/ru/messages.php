@@ -29,6 +29,17 @@ return [
             'created_until' => 'Создано до',
         ],
         'group' => 'Контент',
+        'actions' => [
+            'move' => [
+                'label' => 'Переместить папку',
+                'target' => 'Переместить в',
+                'top_level' => 'Верхний уровень',
+            ],
+        ],
+        'notifications' => [
+            'moved' => 'Папка :folder перемещена в :target',
+            'moved_to_top_level' => 'Папка :folder перемещена на верхний уровень',
+        ],
     ],
     'media' => [
         'title' => 'Медиа',

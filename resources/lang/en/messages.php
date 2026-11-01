@@ -29,6 +29,17 @@ return [
             'created_until' => 'Created until',
         ],
         'group' => 'Content',
+        'actions' => [
+            'move' => [
+                'label' => 'Move folder',
+                'target' => 'Move to',
+                'top_level' => 'Top level',
+            ],
+        ],
+        'notifications' => [
+            'moved' => 'Moved :folder to :target',
+            'moved_to_top_level' => 'Moved :folder to the top level',
+        ],
     ],
     'media' => [
         'title' => 'Media',
