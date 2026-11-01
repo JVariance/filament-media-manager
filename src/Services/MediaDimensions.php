@@ -5,6 +5,7 @@ namespace TomatoPHP\FilamentMediaManager\Services;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Symfony\Component\Process\ExecutableFinder;
 use Throwable;
 
 /**
@@ -101,13 +102,28 @@ class MediaDimensions
     }
 
     /**
+     * The configured ffprobe; a bare name is also looked for where FFmpeg is usually installed, since a web server's
+     * PHP often runs with an empty PATH
+     */
+    public static function ffprobe(): ?string
+    {
+        $ffprobe = config('filament-media-manager.dimensions.ffprobe', 'ffprobe');
+
+        if (! $ffprobe || str_contains($ffprobe, DIRECTORY_SEPARATOR)) {
+            return $ffprobe ?: null;
+        }
+
+        return (new ExecutableFinder)->find($ffprobe, null, ['/opt/homebrew/bin', '/usr/local/bin', '/usr/bin']);
+    }
+
+    /**
      * The size the video is shown in: a video recorded upright on a phone is often stored sideways with a rotation
      *
      * @return ?array{width: int, height: int, duration: ?float}
      */
     protected static function measureVideo(Media $media): ?array
     {
-        $ffprobe = config('filament-media-manager.dimensions.ffprobe', 'ffprobe');
+        $ffprobe = static::ffprobe();
 
         if (! $ffprobe) {
             return null;
