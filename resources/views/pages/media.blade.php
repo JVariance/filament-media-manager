@@ -228,6 +228,8 @@
         font-size: 0.875rem;
         line-height: 1.25rem;
         color: rgb(55 65 81);
+        /* File names and other long values have no place to break */
+        overflow-wrap: anywhere;
     }
 
     .media-text-sm:where(.dark, .dark *) {
