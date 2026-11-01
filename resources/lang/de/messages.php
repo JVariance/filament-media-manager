@@ -16,6 +16,7 @@ return [
             'users' => 'Nutzer',
             'icon' => 'Icon',
             'color' => 'Farbe',
+            'custom_color' => 'Eigene Farbe',
             'is_protected' => 'Passwortgeschützt',
             'password' => 'Passwort',
             'password_confirmation' => 'Passwort bestätigen',
@@ -28,6 +29,17 @@ return [
             'created_until' => 'Erstellt bis',
         ],
         'group' => 'Inhalte',
+        'actions' => [
+            'move' => [
+                'label' => 'Ordner verschieben',
+                'target' => 'Verschieben nach',
+                'top_level' => 'Oberste Ebene',
+            ],
+        ],
+        'notifications' => [
+            'moved' => ':folder nach :target verschoben',
+            'moved_to_top_level' => ':folder auf die oberste Ebene verschoben',
+        ],
     ],
     'media' => [
         'title' => 'Medien',
@@ -63,11 +75,16 @@ return [
             'edit' => [
                 'label' => 'Ordner bearbeiten',
             ],
+            'move' => [
+                'label' => 'In Ordner verschieben',
+                'folder' => 'Ordner',
+            ],
         ],
         'notifications' => [
             'create-media' => 'Medien hinzugefügt',
             'delete-folder' => 'Ordner gelöscht',
             'edit-folder' => 'Ordner gespeichert',
+            'moved' => '{0} Keine Medien verschoben|{1} 1 Medium nach :folder verschoben|[2,*] :count Medien nach :folder verschoben',
         ],
         'meta' => [
             'model' => 'Model',
@@ -79,6 +96,22 @@ return [
             'edit-media' => 'Medium bearbeiten',
             'delete-media' => 'Medium löschen',
         ],
+        'poster' => [
+            'label' => 'Posterbild',
+            'capture' => 'Aktuelles Bild übernehmen',
+            'upload' => 'Bild hochladen',
+            'remove' => 'Entfernen',
+            'none' => 'Kein Posterbild: Der Browser zeigt das erste Bild des Videos.',
+            'not_ready' => 'Das Video ist noch nicht geladen. Starte es oder warte einen Moment.',
+            'capture_failed' => 'Aus diesem Video lässt sich kein Bild übernehmen. Lade stattdessen ein Bild hoch.',
+            'invalid' => 'Das Posterbild muss ein JPEG-, PNG- oder WebP-Bild sein.',
+        ],
+        'focal' => [
+            'label' => 'Fokuspunkt',
+            'help' => 'Klicke auf die wichtigste Stelle. Wird das Bild oder Video zugeschnitten, bleibt sie sichtbar.',
+            'center' => 'Mitte (Standard)',
+            'reset' => 'Zurücksetzen',
+        ],
     ],
     'picker' => [
         'title' => 'Medien auswählen',
@@ -87,6 +120,7 @@ return [
         'select' => 'Auswählen',
         'cancel' => 'Abbrechen',
         'back' => 'Zurück',
+        'breadcrumbs' => 'Ordnerpfad',
         'search' => 'Ordner und Dateien durchsuchen …',
         'select_folder' => 'Ordner auswählen, um seine Medien zu sehen',
         'folders' => 'Ordner',
@@ -97,5 +131,7 @@ return [
         'clear_all' => 'Alle entfernen',
         'confirm_remove' => 'Medium entfernen',
         'confirm_remove_message' => 'Soll dieses Medium wirklich entfernt werden?',
+        'create_folder' => 'Neuer Ordner',
+        'folder_created' => 'Ordner angelegt',
     ],
 ];
