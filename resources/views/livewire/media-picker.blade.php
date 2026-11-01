@@ -574,7 +574,7 @@
                                     <div class="media-preview-picker-{{$mediaItem->id}} {{ str($mediaItem->mime_type)->contains(['image', 'video']) ? 'media-preview-with-bg-picker-' . $mediaItem->id : '' }}"
                                          x-data>
                                         @if(str($mediaItem->mime_type)->contains('image'))
-                                            <img src="{{ $mediaItem->getUrl() }}" alt="{{ $title }}" style="{{ \TomatoPHP\FilamentMediaManager\Services\FocalPoint::style($mediaItem) }}" />
+                                            <img src="{{ $mediaItem->getVersionedUrl() }}" alt="{{ $title }}" style="{{ \TomatoPHP\FilamentMediaManager\Services\FocalPoint::style($mediaItem) }}" />
                                         @elseif(str($mediaItem->mime_type)->contains('video'))
                                             <video src="{{ $mediaItem->getUrl() }}" style="{{ \TomatoPHP\FilamentMediaManager\Services\FocalPoint::style($mediaItem) }}" @if($poster = \TomatoPHP\FilamentMediaManager\Services\VideoPoster::url($mediaItem)) poster="{{ $poster }}" @endif preload="metadata"></video>
                                         @elseif(str($mediaItem->mime_type)->contains('audio'))

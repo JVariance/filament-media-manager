@@ -209,8 +209,8 @@ it('serves a video from the panel, with range requests for seeking', function ()
     get($url, ['Range' => 'bytes=0-9'])->assertStatus(206)->assertHeader('Content-Length', '10');
 });
 
-it('serves only videos, and only to users of the panel', function () {
-    $image = $this->folder->addMedia(UploadedFile::fake()->image('photo.jpg'))->toMediaCollection($this->folder->collection);
+it('serves only videos and images, and only to users of the panel', function () {
+    $image = $this->folder->addMedia(UploadedFile::fake()->create('report.pdf', 10, 'application/pdf'))->toMediaCollection($this->folder->collection);
     $video = uploadVideo($this->folder);
     $panel = filament()->getPanel('admin');
 
