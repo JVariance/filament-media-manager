@@ -119,7 +119,8 @@
         height: 70px;
         position: relative;
         overflow: hidden;
-        margin: 10px;
+        /* The card centers it; a margin at the sides made the card wider than its column with eight columns */
+        margin: 10px 0;
     }
 
     .media-preview-with-bg {
