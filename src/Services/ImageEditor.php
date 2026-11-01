@@ -97,7 +97,7 @@ class ImageEditor
 
         $extension = pathinfo($media->file_name, PATHINFO_EXTENSION);
 
-        return $owner->addMediaFromString($contents)
+        return WebSafeFileName::apply($owner->addMediaFromString($contents), $owner, $media->collection_name)
             ->usingName($name)
             ->usingFileName(pathinfo($media->file_name, PATHINFO_FILENAME) . '-' . now()->format('YmdHis') . ($extension ? ".{$extension}" : ''))
             ->withCustomProperties(collect($media->custom_properties)->only(['title', 'description', 'alt'])->all())

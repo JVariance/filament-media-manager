@@ -12,6 +12,7 @@ use Spatie\MediaLibrary\MediaCollections\Events\MediaHasBeenAddedEvent;
 use Spatie\MediaLibrary\MediaCollections\Models\Observers\MediaObserver;
 use TomatoPHP\FilamentMediaManager\Console\FilamentMediaManagerInstall;
 use TomatoPHP\FilamentMediaManager\Console\StoreMediaDimensions;
+use TomatoPHP\FilamentMediaManager\Console\WebSafeFileNames;
 use TomatoPHP\FilamentMediaManager\Livewire\FolderComponent;
 use TomatoPHP\FilamentMediaManager\Livewire\MediaPicker;
 use TomatoPHP\FilamentMediaManager\Models\Media;
@@ -28,6 +29,7 @@ class FilamentMediaManagerServiceProvider extends ServiceProvider
         $this->commands([
             FilamentMediaManagerInstall::class,
             StoreMediaDimensions::class,
+            WebSafeFileNames::class,
         ]);
 
         // Register Config file

@@ -64,6 +64,7 @@ finally, register the plugin on `/app/Providers/Filament/AdminPanelProvider.php`
 - 📐 Width and height of images and videos stored on upload
 - 🎯 Focal points for images and videos, kept in view where they are cropped
 - ✂️ Image editor: crop, rotate, straighten, flip and zoom, saved in place or as a copy
+- 🔤 Web-safe file names for uploads, and a command to rename the files of existing media
 - 🔒 Set password for folders with secure access
 - 📝 Upload Files with Custom Fields using `->schema()`
 - 🤖 Auto Create Folders for Model/Collection/Record
@@ -497,6 +498,28 @@ JPEG, PNG and WebP images have an "Edit image" action in the media details, buil
 After an image is replaced, its stored width and height follow it, its focal point is removed (it was set on the old image), and its conversions and responsive images are made again. Listen to `TomatoPHP\FilamentMediaManager\Events\MediaFileReplaced` to renew anything else made from the file. Since the URL stays the same, the media manager adds the time of the change to it (`$media->getVersionedUrl()`); do the same where your frontend caches images for long.
 
 Cropper.js is registered as a Filament asset; run `php artisan filament:assets` after updating (Laravel apps usually do with `filament:upgrade` after `composer update`).
+
+## Web-Safe File Names
+
+Uploads keep their file names by default. To give them names that work in every URL, turn on web-safe file names:
+
+```php
+FilamentMediaManagerPlugin::make()
+    ->webSafeFileNames()
+```
+
+The file name is transliterated in the app's language, lowercase, with hyphens for spaces and other characters; in German, "Ärger & Spaß.JPG" becomes "aerger-und-spass.jpg". The medium's name keeps its umlauts and capitals. A file name that another medium of the folder has already gets a number (`spass-2.jpg`). It applies to uploads in the media list, the picker and `MediaManagerInput`.
+
+`webSafeFileNames(dictionary: ['+' => 'plus'])` adds words for further characters, and `webSafeFileNames(language: 'de')` transliterates in another language than the app's (`&` and `@` have words already).
+
+To rename the files of media added before:
+
+```bash
+php artisan filament-media-manager:web-safe-file-names --dry-run
+php artisan filament-media-manager:web-safe-file-names --redirects=apache
+```
+
+`--dry-run` only shows the new names. A renamed file has a new URL: references by the medium's id or UUID (like the picker's) still work, but a URL written into a text or linked from elsewhere does not. `--redirects=apache` prints `Redirect 301` lines for an `.htaccess`, `--redirects=nginx` prints `location` blocks. Every renamed file also dispatches `TomatoPHP\FilamentMediaManager\Events\MediaFileRenamed` with its old and new URL, to add redirects in your app. Laravel serves missing files under `/storage` with its own route, so a redirect in `routes/web.php` is not reached there.
 
 ## Allow User Access
 

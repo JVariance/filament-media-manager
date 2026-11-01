@@ -18,6 +18,7 @@ use Spatie\MediaLibrary\MediaCollections\MediaCollection;
 use Spatie\MediaLibrary\MediaCollections\Models\Media as SpatieMedia;
 use Throwable;
 use TomatoPHP\FilamentMediaManager\Models\Media;
+use TomatoPHP\FilamentMediaManager\Services\WebSafeFileName;
 
 class MediaManagerInput extends Repeater
 {
@@ -125,7 +126,7 @@ class MediaManagerInput extends Repeater
                     }
 
                     /** @var FileAdder $mediaAdder */
-                    $mediaAdder = $record->addMediaFromString($file->get());
+                    $mediaAdder = WebSafeFileName::apply($record->addMediaFromString($file->get()), $record, $component->name ?? 'default');
 
                     $filename = $mediaComponent->shouldPreserveFilenames() ? $file->getClientOriginalName() : (Str::ulid() . '.' . $file->getClientOriginalExtension());
 

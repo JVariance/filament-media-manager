@@ -18,6 +18,7 @@ use TomatoPHP\FilamentMediaManager\Models\Media;
 use TomatoPHP\FilamentMediaManager\Resources\Actions\EditCurrentFolderAction;
 use TomatoPHP\FilamentMediaManager\Resources\Schemas\FolderForm;
 use TomatoPHP\FilamentMediaManager\Services\FolderBreadcrumbs;
+use TomatoPHP\FilamentMediaManager\Services\WebSafeFileName;
 
 class MediaPicker extends Component implements HasActions, HasSchemas
 {
@@ -169,8 +170,7 @@ class MediaPicker extends Component implements HasActions, HasSchemas
                     }
 
                     // Pass file directly like CreateMediaAction does
-                    $media = $model
-                        ->addMedia($file)
+                    $media = WebSafeFileName::apply($model->addMedia($file), $model, $folder->collection ?? 'default')
                         ->toMediaCollection($folder->collection ?? 'default');
 
                     $uploadedMedia[] = $media->uuid;

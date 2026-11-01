@@ -9,6 +9,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Arr;
 use TomatoPHP\FilamentMediaManager\Models\Folder;
+use TomatoPHP\FilamentMediaManager\Services\WebSafeFileName;
 
 class CreateMediaAction
 {
@@ -56,8 +57,9 @@ class CreateMediaAction
                         : [];
 
                     foreach ($files as $file) {
-                        ($folder->model ?? $folder)
-                            ->addMedia($file)
+                        $owner = $folder->model ?? $folder;
+
+                        WebSafeFileName::apply($owner->addMedia($file), $owner, $folder->collection)
                             ->withCustomProperties($customProperties)
                             ->toMediaCollection($folder->collection);
                     }
