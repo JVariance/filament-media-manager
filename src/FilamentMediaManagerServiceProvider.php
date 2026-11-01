@@ -4,9 +4,11 @@ namespace TomatoPHP\FilamentMediaManager;
 
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
+use Spatie\MediaLibrary\MediaCollections\Models\Observers\MediaObserver;
 use TomatoPHP\FilamentMediaManager\Console\FilamentMediaManagerInstall;
 use TomatoPHP\FilamentMediaManager\Livewire\FolderComponent;
 use TomatoPHP\FilamentMediaManager\Livewire\MediaPicker;
+use TomatoPHP\FilamentMediaManager\Models\Media;
 use TomatoPHP\FilamentMediaManager\Services\FilamentMediaManagerServices;
 
 class FilamentMediaManagerServiceProvider extends ServiceProvider
@@ -64,6 +66,15 @@ class FilamentMediaManagerServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // you boot methods here
+        // Spatie removes a medium's files in an observer, which it only registers for its configured media model.
+        // Model events carry the class of the model, so the media this package deletes through its own model
+        // would leave their files behind.
+        $observer = config('media-library.media_observer', MediaObserver::class);
+
+        collect([Media::class, config('filament-media-manager.model.media')])
+            ->filter()
+            ->unique()
+            ->reject(fn (string $model): bool => $model === config('media-library.media_model'))
+            ->each(fn (string $model) => $model::observe($this->app->make($observer)));
     }
 }
