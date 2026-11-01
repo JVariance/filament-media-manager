@@ -488,12 +488,13 @@
                     </div>
                 </x-slot>
 
+                {{-- A long file name has no place to break; on a narrow screen it would widen the page --}}
                 <x-slot name="heading">
-                    {{ $item->uuid }}
+                    <span style="overflow-wrap: anywhere;">{{ $item->uuid }}</span>
                 </x-slot>
 
                 <x-slot name="description">
-                    {{ $item->file_name }}
+                    <span style="overflow-wrap: anywhere;">{{ $item->file_name }}</span>
                 </x-slot>
 
                 <div>
