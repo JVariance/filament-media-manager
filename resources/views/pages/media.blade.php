@@ -10,6 +10,8 @@
         $folders = [];
     }
 
+    // Media are selected through the table, which shows the selection and its bulk actions
+    $canSelect = $this->getTable()->isSelectionEnabled();
 @endphp
 
 <style>
@@ -48,6 +50,40 @@
         .media-grid {
             grid-template-columns: repeat(8, minmax(0, 1fr));
         }
+    }
+
+    .media-item {
+        position: relative;
+        border-radius: 0.5rem;
+    }
+
+    .media-item-checkbox {
+        position: absolute;
+        top: 0.5rem;
+        inset-inline-start: 0.5rem;
+        z-index: 1;
+        opacity: 0;
+        transition: opacity 0.15s ease;
+    }
+
+    .media-item:hover .media-item-checkbox,
+    .media-item-checkbox:focus-visible,
+    .media-item-checkbox:checked,
+    .media-item-selecting .media-item-checkbox {
+        opacity: 1;
+    }
+
+    @media (hover: none) {
+        .media-item-checkbox {
+            opacity: 1;
+        }
+    }
+
+    .media-item-selected .media-card,
+    .media-item-selected .media-card:hover {
+        background-color: color-mix(in oklab, var(--primary-500) 12%, transparent);
+        outline: 2px solid var(--primary-500);
+        outline-offset: -2px;
     }
 
     .media-trigger-slot {
@@ -372,6 +408,42 @@
             @if($item instanceof \TomatoPHP\FilamentMediaManager\Models\Folder)
                 @livewire(\TomatoPHP\FilamentMediaManager\Livewire\FolderComponent::class, ['item' => $item], key('folder-' . $item->id))
             @else
+                @php
+                    $recordKey = $this->getTableRecordKey($item);
+                @endphp
+                <div
+                    class="media-item"
+                    {{-- The key of a table record, as Filament gives it --}}
+                    wire:key="{{ $this->getId() }}.table.records.{{ $recordKey }}"
+                    @if($canSelect)
+                        x-bind:class="{
+                            'media-item-selected': isRecordSelected(@js($recordKey)),
+                            'media-item-selecting': getSelectedRecordsCount() > 0,
+                        }"
+                        {{-- Shift-click would select the text of the cards --}}
+                        x-on:mousedown="if ($event.shiftKey && $event.target.closest('.fi-modal-trigger')) $event.preventDefault()"
+                        {{-- While media are selected, or with Shift, Cmd or Ctrl, a click on the card selects instead of showing the details --}}
+                        x-on:click.capture="
+                            if (! $event.target.closest('.fi-modal-trigger')) return
+                            if (! (getSelectedRecordsCount() || $event.shiftKey || $event.metaKey || $event.ctrlKey)) return
+                            $event.preventDefault()
+                            $event.stopPropagation()
+                            $el.querySelector('.media-item-checkbox').dispatchEvent(new MouseEvent('click', { bubbles: true, shiftKey: $event.shiftKey }))
+                        "
+                    @endif
+                >
+                @if($canSelect)
+                    {{-- The table's checkbox class gives Shift-click ranges --}}
+                    <input
+                        type="checkbox"
+                        aria-label="{{ __('filament-tables::table.fields.bulk_select_record.label', ['key' => $item->name]) }}"
+                        value="{{ $recordKey }}"
+                        x-on:click="toggleSelectedRecord(@js($recordKey))"
+                        x-bind:checked="isRecordSelected(@js($recordKey)) ? 'checked' : null"
+                        wire:loading.attr="disabled"
+                        class="fi-ta-record-checkbox fi-checkbox-input media-item-checkbox"
+                    />
+                @endif
                 <x-filament::modal  width="3xl" slide-over>
                 <x-slot name="trigger" class="media-trigger-slot">
                     <div class="media-card">
@@ -650,6 +722,7 @@
                     @endif
 
             </x-filament::modal>
+                </div>
             @endif
         @endforeach
     @endif

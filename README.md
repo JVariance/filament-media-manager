@@ -57,6 +57,7 @@ finally, register the plugin on `/app/Providers/Filament/AdminPanelProvider.php`
 - 📁 Manage your media files using spatie media library
 - 📂 Create folders and subfolders
 - 🎨 Default folder color and a color palette for the folder form
+- ☑️ Select several media and move or delete them at once
 - 🔒 Set password for folders with secure access
 - 📝 Upload Files with Custom Fields using `->schema()`
 - 🤖 Auto Create Folders for Model/Collection/Record
@@ -428,6 +429,12 @@ you can allow create and manage subfolders on your media manager on `/app/Provid
         ->allowSubFolders()
 ])
 ```
+
+## Select and Move Media
+
+In a folder, a checkbox shows on each medium when you hover it. Shift-, Cmd- or Ctrl-click a medium to select it, and while media are selected a click adds or removes one; Shift selects a range. The selected media can be deleted or moved to another folder with the table's bulk actions.
+
+Moving only changes which folder a medium is in (`model_type`, `model_id` and `collection_name`, like an upload to the target folder); the files stay where they are. Only media of folders and sub folders can be moved, and only to such folders: the media of a model's folder belong to the record, moving them out would take them away from it. With `allowUserAccess()`, media can be moved out of and into folders of the user or without an owner.
 
 ## Allow User Access
 

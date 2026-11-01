@@ -64,11 +64,16 @@ return [
             'edit' => [
                 'label' => 'Edit Folder',
             ],
+            'move' => [
+                'label' => 'Move to folder',
+                'folder' => 'Folder',
+            ],
         ],
         'notifications' => [
             'create-media' => 'Media created successfully',
             'delete-folder' => 'Folder deleted successfully',
             'edit-folder' => 'Folder edited successfully',
+            'moved' => '{0} No media were moved|{1} 1 medium moved to :folder|[2,*] :count media moved to :folder',
         ],
         'meta' => [
             'model' => 'Model',
