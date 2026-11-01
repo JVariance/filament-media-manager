@@ -173,6 +173,15 @@ it('offers the editor only for JPEG, PNG and WebP images', function () {
         ->assertActionHidden(TestAction::make('editImage')->arguments(['record' => ['id' => $video->id]]));
 });
 
+it('lets a long file name in the heading break', function () {
+    $image = $this->folder->addMedia(UploadedFile::fake()->image('EinSehrLangerDateinameOhneBindestriche.jpg'))->toMediaCollection($this->folder->collection);
+
+    Livewire::withQueryParams(['folder_id' => $this->folder->id])
+        ->test(ListMedia::class)
+        ->mountAction('editImage', ['record' => ['id' => $image->id]])
+        ->assertMountedActionModalSeeHtml('Edit image: <span style="overflow-wrap: anywhere;">EinSehrLangerDateinameOhneBindestriche.jpg</span>');
+});
+
 it('removes the kept original with the image', function () {
     $image = editableImage($this->folder);
     saveEdited($this->folder, $image, imageContents(60, 60));
