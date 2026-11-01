@@ -17,6 +17,7 @@ use TomatoPHP\FilamentMediaManager\Resources\Actions\DeleteFolderAction;
 use TomatoPHP\FilamentMediaManager\Resources\Actions\EditCurrentFolderAction;
 use TomatoPHP\FilamentMediaManager\Resources\FolderResource;
 use TomatoPHP\FilamentMediaManager\Resources\MediaResource;
+use TomatoPHP\FilamentMediaManager\Services\MediaMover;
 
 class ListMedia extends ManageRecords
 {
@@ -152,6 +153,36 @@ class ListMedia extends ManageRecords
                 }
             })
             ->view('filament-media-manager::pages.folder-action', ['item' => $item]);
+    }
+
+    /**
+     * Media dropped on a folder; the browser only sends ids, so the folders and media are checked again
+     *
+     * @param  array<int | string>  $records
+     */
+    public function moveMediaToFolder(array $records, int $folder): void
+    {
+        $from = Folder::query()->find(session('folder_id'));
+        $to = $from && MediaMover::canMoveFrom($from) ? MediaMover::targets($from)->find($folder) : null;
+
+        if (! $to) {
+            return;
+        }
+
+        // The folder scope of Media limits them to the open folder
+        $media = Media::query()
+            ->whereKey($records)
+            ->get()
+            ->filter(fn (Media $media): bool => static::getResource()::canEdit($media));
+
+        $count = MediaMover::move($media, $to);
+
+        Notification::make()
+            ->title(trans_choice('filament-media-manager::messages.media.notifications.moved', $count, ['count' => $count, 'folder' => $to->name]))
+            ->success()
+            ->send();
+
+        $this->deselectAllTableRecords();
     }
 
     public function editMedia(): Actions\Action
