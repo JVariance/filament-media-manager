@@ -34,4 +34,9 @@ return [
     ],
 
     'navigation_sort' => 0,
+
+    'dimensions' => [
+        // ffprobe (from FFmpeg) measures videos; false leaves them without dimensions
+        'ffprobe' => env('FFPROBE_BINARY', 'ffprobe'),
+    ],
 ];

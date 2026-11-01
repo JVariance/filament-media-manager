@@ -5,12 +5,15 @@ namespace TomatoPHP\FilamentMediaManager;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
+use Spatie\MediaLibrary\MediaCollections\Events\MediaHasBeenAddedEvent;
 use Spatie\MediaLibrary\MediaCollections\Models\Observers\MediaObserver;
 use TomatoPHP\FilamentMediaManager\Console\FilamentMediaManagerInstall;
+use TomatoPHP\FilamentMediaManager\Console\StoreMediaDimensions;
 use TomatoPHP\FilamentMediaManager\Livewire\FolderComponent;
 use TomatoPHP\FilamentMediaManager\Livewire\MediaPicker;
 use TomatoPHP\FilamentMediaManager\Models\Media;
 use TomatoPHP\FilamentMediaManager\Services\FilamentMediaManagerServices;
+use TomatoPHP\FilamentMediaManager\Services\MediaDimensions;
 use TomatoPHP\FilamentMediaManager\Services\VideoPoster;
 
 class FilamentMediaManagerServiceProvider extends ServiceProvider
@@ -20,6 +23,7 @@ class FilamentMediaManagerServiceProvider extends ServiceProvider
         // Register generate command
         $this->commands([
             FilamentMediaManagerInstall::class,
+            StoreMediaDimensions::class,
         ]);
 
         // Register Config file
@@ -84,5 +88,8 @@ class FilamentMediaManagerServiceProvider extends ServiceProvider
             ->filter()
             ->unique()
             ->each(fn (string $model) => Event::listen("eloquent.deleting: {$model}", fn ($media) => VideoPoster::remove($media, save: false)));
+
+        // The dimensions of every image and video added, from the media manager or anywhere else
+        Event::listen(MediaHasBeenAddedEvent::class, fn (MediaHasBeenAddedEvent $event) => MediaDimensions::store($event->media));
     }
 }

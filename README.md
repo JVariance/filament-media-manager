@@ -61,6 +61,7 @@ finally, register the plugin on `/app/Providers/Filament/AdminPanelProvider.php`
 - 🖱️ Drag media onto a folder or a folder in the breadcrumbs to move them
 - 🗂️ Move folders into other folders or up to the top level
 - 🎞️ Poster images for videos, taken from a frame or uploaded
+- 📐 Width and height of images and videos stored on upload
 - 🔒 Set password for folders with secure access
 - 📝 Upload Files with Custom Fields using `->schema()`
 - 🤖 Auto Create Folders for Model/Collection/Record
@@ -458,6 +459,22 @@ The image is stored next to the video (`{media directory}/posters/`), its file n
 The package's `Media` model also has `$media->getPosterUrl()`.
 
 To take a frame, the browser has to load the video from the panel's own origin, so the plugin registers an authenticated panel route that serves it (with range requests for seeking). If your plugin class overrides `register()`, call `$this->registerRoutes($panel)` in it.
+
+## Image and Video Dimensions
+
+The width and height of every image and video added (from the media manager or anywhere else through Spatie) are stored as the custom properties `width` and `height`, and the duration of a video in seconds as `duration`. Give `<img>` and `<video>` their size with them, so that nothing shifts while the page loads:
+
+```blade
+<img src="{{ $media->getUrl() }}" width="{{ $media->getCustomProperty('width') }}" height="{{ $media->getCustomProperty('height') }}" alt="">
+```
+
+Images are measured with `getimagesize()`, SVGs by their `width` and `height` or their `viewBox`. Videos need `ffprobe` from FFmpeg; set its path with `FFPROBE_BINARY` or `filament-media-manager.dimensions.ffprobe` (`false` turns it off). A video recorded upright on a phone gets its upright size. For media added before, run:
+
+```bash
+php artisan filament-media-manager:dimensions
+```
+
+`--force` measures media that have dimensions already, too.
 
 ## Allow User Access
 
