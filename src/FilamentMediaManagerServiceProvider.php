@@ -2,6 +2,9 @@
 
 namespace TomatoPHP\FilamentMediaManager;
 
+use Filament\Support\Assets\Css;
+use Filament\Support\Assets\Js;
+use Filament\Support\Facades\FilamentAsset;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
@@ -10,6 +13,7 @@ use TomatoPHP\FilamentMediaManager\Livewire\FolderComponent;
 use TomatoPHP\FilamentMediaManager\Livewire\MediaPicker;
 use TomatoPHP\FilamentMediaManager\Models\Media;
 use TomatoPHP\FilamentMediaManager\Services\FilamentMediaManagerServices;
+use TomatoPHP\FilamentMediaManager\Services\ImageEditor;
 use TomatoPHP\FilamentMediaManager\Services\VideoPoster;
 
 class FilamentMediaManagerServiceProvider extends ServiceProvider
@@ -67,10 +71,18 @@ class FilamentMediaManagerServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // A video's poster is stored next to it; Spatie only removes the video's own files
+        // A video's poster and an edited image's original are stored next to it; Spatie only removes its own files
         collect([Media::class, config('filament-media-manager.model.media'), config('media-library.media_model')])
             ->filter()
             ->unique()
-            ->each(fn (string $model) => Event::listen("eloquent.deleting: {$model}", fn ($media) => VideoPoster::remove($media, save: false)));
+            ->each(fn (string $model) => Event::listen("eloquent.deleting: {$model}", function ($media): void {
+                VideoPoster::remove($media, save: false);
+                ImageEditor::removeOriginal($media);
+            }));
+
+        FilamentAsset::register([
+            Css::make('cropper', __DIR__ . '/../resources/dist/cropper/cropper.min.css')->loadedOnRequest(),
+            Js::make('cropper', __DIR__ . '/../resources/dist/cropper/cropper.min.js')->loadedOnRequest(),
+        ], 'tomatophp/filament-media-manager');
     }
 }

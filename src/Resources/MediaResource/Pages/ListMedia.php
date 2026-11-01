@@ -7,9 +7,12 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ManageRecords;
+use Filament\Support\Enums\Width;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use TomatoPHP\FilamentMediaManager\Form\FocalPointPicker;
+use TomatoPHP\FilamentMediaManager\Form\ImageEditorField;
 use TomatoPHP\FilamentMediaManager\Form\VideoPosterPicker;
 use TomatoPHP\FilamentMediaManager\Models\Folder;
 use TomatoPHP\FilamentMediaManager\Models\Media;
@@ -20,6 +23,7 @@ use TomatoPHP\FilamentMediaManager\Resources\Actions\EditCurrentFolderAction;
 use TomatoPHP\FilamentMediaManager\Resources\FolderResource;
 use TomatoPHP\FilamentMediaManager\Resources\MediaResource;
 use TomatoPHP\FilamentMediaManager\Services\FocalPoint;
+use TomatoPHP\FilamentMediaManager\Services\ImageEditor;
 use TomatoPHP\FilamentMediaManager\Services\VideoPoster;
 
 class ListMedia extends ManageRecords
@@ -213,6 +217,66 @@ class ListMedia extends ManageRecords
                 }
             })
             ->successNotificationTitle('Media updated successfully');
+    }
+
+    /**
+     * Crop, rotate and flip an image (ImageEditorField), and save it in place or as a copy
+     */
+    public function editImage(): Actions\Action
+    {
+        $media = fn (array $arguments): ?Media => Media::find($arguments['record']['id'] ?? null);
+
+        return Actions\Action::make('editImage')
+            ->label(trans('filament-media-manager::messages.media.editor.label'))
+            ->icon('heroicon-s-scissors')
+            ->color('gray')
+            ->visible(fn (array $arguments): bool => ($image = $media($arguments)) && ImageEditor::supports($image))
+            ->authorize(fn (array $arguments): bool => ($image = $media($arguments)) && static::getResource()::canEdit($image))
+            ->modalHeading(fn (array $arguments): string => trans('filament-media-manager::messages.media.editor.label') . ': ' . $media($arguments)?->file_name)
+            ->modalWidth(Width::SixExtraLarge)
+            ->schema(fn (array $arguments): array => [
+                ImageEditorField::make('image')
+                    ->hiddenLabel()
+                    ->media(fn (): ?Media => $media($arguments)),
+            ])
+            // The editor has its own buttons, which upload the image first
+            ->modalSubmitAction(false)
+            ->extraModalFooterActions(fn (array $arguments): array => [
+                Actions\Action::make('restoreOriginal')
+                    ->label(trans('filament-media-manager::messages.media.editor.restore'))
+                    ->color('danger')
+                    ->link()
+                    ->visible(fn (): bool => ($image = $media($arguments)) && ImageEditor::hasOriginal($image))
+                    ->requiresConfirmation()
+                    ->modalDescription(trans('filament-media-manager::messages.media.editor.restore_confirm'))
+                    ->action(function () use ($media, $arguments): void {
+                        ImageEditor::restoreOriginal($media($arguments));
+
+                        Notification::make()->title(trans('filament-media-manager::messages.media.editor.restored'))->success()->send();
+                    })
+                    ->cancelParentActions(),
+            ])
+            ->action(function (array $arguments, array $data) use ($media): void {
+                $image = $media($arguments);
+                $file = $data['image'] ?? null;
+
+                if (! $image || ! $file instanceof TemporaryUploadedFile) {
+                    return;
+                }
+
+                $saved = ($arguments['mode'] ?? 'replace') === 'copy'
+                    ? ImageEditor::saveAsCopy($image, (string) $file->get(), trans('filament-media-manager::messages.media.editor.copy_name', ['name' => $image->name]))
+                    : ImageEditor::replace($image, (string) $file->get());
+
+                $file->delete();
+
+                Notification::make()
+                    ->title(trans($saved
+                        ? (($arguments['mode'] ?? 'replace') === 'copy' ? 'filament-media-manager::messages.media.editor.copied' : 'filament-media-manager::messages.media.editor.saved')
+                        : 'filament-media-manager::messages.media.editor.failed'))
+                    ->status($saved ? 'success' : 'danger')
+                    ->send();
+            });
     }
 
     public function deleteMedia(): Actions\Action
