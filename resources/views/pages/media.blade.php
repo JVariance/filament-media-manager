@@ -184,6 +184,11 @@
         color: rgb(55 65 81);
     }
 
+    .media-text-sm:where(.dark, .dark *) {
+        color: rgb(209 213 219);
+    }
+
+    /* After .media-text-sm, so that the link keeps its color in the dark */
     .media-link {
         color: var(--primary-600);
         text-decoration: underline;
@@ -200,10 +205,6 @@
         width: 1rem;
         height: 1rem;
         vertical-align: text-bottom;
-    }
-
-    .media-text-sm:where(.dark, .dark *) {
-        color: rgb(209 213 219);
     }
 
     .media-timestamp {
