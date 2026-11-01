@@ -4,6 +4,7 @@
 
 <x-dynamic-component :component="$getFieldWrapperView()" :field="$field">
     <div
+        {{-- Blade swallows the line break after @js(), so the statements after it end with a semicolon --}}
         x-data="{
             state: $wire.{{ $applyStateBindingModifiers("\$entangle('{$statePath}')") }},
             error: null,
@@ -13,7 +14,7 @@
                 const video = this.$refs.video
 
                 if (! video.videoWidth) {
-                    this.error = @js(trans('filament-media-manager::messages.media.poster.not_ready'))
+                    this.error = @js(trans('filament-media-manager::messages.media.poster.not_ready'));
 
                     return
                 }
@@ -22,7 +23,7 @@
                     this.state = this.draw(video, video.videoWidth, video.videoHeight)
                     this.error = null
                 } catch (error) {
-                    this.error = @js(trans('filament-media-manager::messages.media.poster.capture_failed'))
+                    this.error = @js(trans('filament-media-manager::messages.media.poster.capture_failed'));
                 }
             },
 
@@ -43,7 +44,7 @@
                 }
 
                 image.onerror = () => {
-                    this.error = @js(trans('filament-media-manager::messages.media.poster.invalid'))
+                    this.error = @js(trans('filament-media-manager::messages.media.poster.invalid'));
                     URL.revokeObjectURL(image.src)
                 }
 
