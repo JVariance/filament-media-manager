@@ -26,6 +26,9 @@ class ImageEditor
         'image/webp' => 'imagewebp',
     ];
 
+    /**
+     * The file name of the kept original, so that it is found when the image's file is renamed
+     */
     public const ORIGINAL_PROPERTY = 'original';
 
     public static function supports(Media $media): bool
@@ -52,8 +55,8 @@ class ImageEditor
         $disk = Storage::disk($media->disk);
 
         if (! static::hasOriginal($media)) {
+            $media->setCustomProperty(static::ORIGINAL_PROPERTY, $media->file_name);
             $disk->copy($media->getPathRelativeToRoot(), static::originalPath($media));
-            $media->setCustomProperty(static::ORIGINAL_PROPERTY, true);
         }
 
         $disk->put($media->getPathRelativeToRoot(), $contents);
@@ -188,6 +191,9 @@ class ImageEditor
 
     protected static function originalPath(Media $media): string
     {
-        return static::originalsDirectory($media) . '/' . $media->file_name;
+        $original = $media->getCustomProperty(static::ORIGINAL_PROPERTY);
+
+        // Kept before its file name was stored, the original has the image's
+        return static::originalsDirectory($media) . '/' . basename(is_string($original) ? $original : $media->file_name);
     }
 }
