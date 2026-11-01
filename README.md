@@ -445,7 +445,7 @@ php artisan filament-media-manager:web-safe-file-names --dry-run
 php artisan filament-media-manager:web-safe-file-names --redirects=apache
 ```
 
-`--dry-run` only shows the new names. A renamed file has a new URL: references by the medium's id or UUID (like the picker's) still work, but a URL written into a text or linked from elsewhere does not. `--redirects=apache` prints `Redirect 301` lines for an `.htaccess`, `--redirects=nginx` prints `location` blocks. Every renamed file also dispatches `TomatoPHP\FilamentMediaManager\Events\MediaFileRenamed` with its old and new URL, to add redirects in your app. Laravel serves missing files under `/storage` with its own route, so a redirect in `routes/web.php` is not reached there.
+`--dry-run` only shows the new names. A renamed file has a new URL: references by the medium's id or UUID (like the picker's) still work, but a URL written into a text or linked from elsewhere does not. `--redirects=apache` prints `Redirect 301` lines for an `.htaccess`, `--redirects=nginx` prints `location` blocks, and `--redirects=laravel` prints `Route::permanentRedirect()` lines for `routes/web.php` (the web server passes a missing file on to Laravel, and Laravel's own storage route comes after the app's routes). Every renamed file also dispatches `TomatoPHP\FilamentMediaManager\Events\MediaFileRenamed` with its old and new URL, to add redirects in your app.
 
 ## Allow User Access
 
