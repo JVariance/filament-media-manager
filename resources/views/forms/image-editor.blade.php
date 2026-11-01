@@ -166,7 +166,7 @@
 
             <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--gray-500);">
                 {{ trans('filament-media-manager::messages.media.editor.straighten') }}
-                <input type="range" min="-45" max="45" step="0.5" x-model="straighten" x-on:input="cropper.rotateTo(rotation + Number(straighten))" style="width: 8rem;" />
+                <input type="range" min="-45" max="45" step="0.5" x-model="straighten" x-on:input="cropper.rotateTo(rotation + Number(straighten))" style="width: 8rem; accent-color: var(--primary-500);" />
                 <span x-text="`${straighten}°`" style="min-width: 3rem;"></span>
             </label>
 
