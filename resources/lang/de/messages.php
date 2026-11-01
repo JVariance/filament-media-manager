@@ -105,6 +105,7 @@ return [
             'not_ready' => 'Das Video ist noch nicht geladen. Starte es oder warte einen Moment.',
             'capture_failed' => 'Aus diesem Video lässt sich kein Bild übernehmen. Lade stattdessen ein Bild hoch.',
             'invalid' => 'Das Posterbild muss ein JPEG-, PNG- oder WebP-Bild sein.',
+            'upload_failed' => 'Das Bild ließ sich nicht hochladen. Versuche es noch einmal.',
         ],
         'focal' => [
             'label' => 'Fokuspunkt',
