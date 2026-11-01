@@ -232,6 +232,24 @@
         overflow-wrap: anywhere;
     }
 
+    .media-link {
+        color: var(--primary-600);
+        text-decoration: underline;
+        /* A URL has no place to break */
+        overflow-wrap: anywhere;
+    }
+
+    .media-link:where(.dark, .dark *) {
+        color: var(--primary-400);
+    }
+
+    .media-link-icon {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        vertical-align: text-bottom;
+    }
+
     .media-text-sm:where(.dark, .dark *) {
         color: rgb(209 213 219);
     }
@@ -688,6 +706,17 @@
                                     <p class="media-text-sm">
                                         {{ $item->file_name }}
                                     </p>
+                                </div>
+                            </div>
+                            <div>
+                                <div>
+                                    <h1 class="media-subtitle">{{ trans('filament-media-manager::messages.media.meta.url') }}</h1>
+                                </div>
+                                <div class="flex-start">
+                                    <a href="{{ $item->getUrl() }}" target="_blank" rel="noopener" class="media-text-sm media-link">
+                                        {{ $item->getUrl() }}
+                                        <x-filament::icon icon="heroicon-m-arrow-top-right-on-square" class="media-link-icon" />
+                                    </a>
                                 </div>
                             </div>
                             <div>
