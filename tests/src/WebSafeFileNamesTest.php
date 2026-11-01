@@ -4,6 +4,7 @@ namespace TomatoPHP\FilamentMediaManager\Tests;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -140,7 +141,24 @@ it('renames the files of media added before, with redirects from their old URLs'
 })->with([
     ['apache', 'Redirect 301 "/storage/1/Ärger-&-Spaß.JPG" "/storage/1/aerger-und-spass.jpg"'],
     ['nginx', 'location = "/storage/1/Ärger-&-Spaß.JPG" { return 301 "/storage/1/aerger-und-spass.jpg"; }'],
+    ['laravel', "Route::permanentRedirect('/storage/1/Ärger-&-Spaß.JPG', '/storage/1/aerger-und-spass.jpg');"],
 ]);
+
+it('redirects from the old URL with the printed route', function () {
+    app()->setLocale('de');
+
+    $media = $this->folder->addMedia(UploadedFile::fake()->image('Größe.jpg'))->toMediaCollection($this->folder->collection);
+    $oldUrl = $media->getUrl();
+
+    artisan('filament-media-manager:web-safe-file-names --redirects=laravel')
+        ->expectsOutputToContain("Route::permanentRedirect('/storage/1/Größe.jpg', '/storage/1/groesse.jpg');")
+        ->assertSuccessful();
+
+    // As routes/web.php would have it, with the line the command printed
+    Route::permanentRedirect('/storage/1/Größe.jpg', '/storage/1/groesse.jpg');
+
+    $this->get($oldUrl)->assertRedirect('/storage/1/groesse.jpg')->assertStatus(301);
+});
 
 it('only shows the new file names in a dry run', function () {
     Event::fake([MediaFileRenamed::class]);

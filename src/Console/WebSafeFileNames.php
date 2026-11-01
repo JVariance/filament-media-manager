@@ -17,7 +17,7 @@ class WebSafeFileNames extends Command
 {
     protected $signature = 'filament-media-manager:web-safe-file-names
         {--dry-run : Show the new file names, rename nothing}
-        {--redirects= : Print redirects from the old URLs, for "apache" (.htaccess) or "nginx"}
+        {--redirects= : Print redirects from the old URLs, for "apache" (.htaccess), "nginx" or "laravel" (routes/web.php)}
         {--language= : The language to transliterate in, the app\'s by default}';
 
     protected $description = 'Rename the files of all media to web-safe file names';
@@ -26,8 +26,8 @@ class WebSafeFileNames extends Command
     {
         $format = $this->option('redirects');
 
-        if ($format && ! in_array($format, ['apache', 'nginx'], true)) {
-            $this->error('--redirects is "apache" or "nginx".');
+        if ($format && ! in_array($format, ['apache', 'nginx', 'laravel'], true)) {
+            $this->error('--redirects is "apache", "nginx" or "laravel".');
 
             return self::INVALID;
         }
@@ -94,6 +94,11 @@ class WebSafeFileNames extends Command
 
     protected static function redirect(string $format, string $from, string $to): string
     {
+        if ($format === 'laravel') {
+            // A missing file is passed on to Laravel, and its storage route is registered after the app's routes
+            return 'Route::permanentRedirect(' . var_export($from, true) . ', ' . var_export($to, true) . ');';
+        }
+
         $from = str_replace('"', '\\"', $from);
 
         return $format === 'apache'
