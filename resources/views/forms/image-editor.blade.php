@@ -135,13 +135,14 @@
 
         <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem;">
             <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
+                {{-- @js() is not compiled in the attributes of a Blade component, {{ }} is --}}
                 @foreach ($getAspectRatios() as $label => $ratio)
                     <x-filament::button
                         type="button"
                         size="xs"
                         color="gray"
-                        x-on:click="setRatio(@js($ratio))"
-                        x-bind:style="(ratio === @js($ratio)) && 'outline: 2px solid var(--primary-500)'"
+                        x-on:click="setRatio({{ \Illuminate\Support\Js::from($ratio) }})"
+                        x-bind:style="(ratio === {{ \Illuminate\Support\Js::from($ratio) }}) && 'outline: 2px solid var(--primary-500)'"
                     >
                         {{ $label }}
                     </x-filament::button>
