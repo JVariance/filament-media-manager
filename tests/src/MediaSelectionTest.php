@@ -224,3 +224,37 @@ it('translates the move notification', function (string $locale, string $expecte
     ['tr', '1 medya Archive klasörüne taşındı'],
     ['ru', '1 медиафайл перемещён в Archive'],
 ]);
+
+it('moves nothing to a protected folder that is not unlocked', function () {
+    $from = Folder::factory()->create();
+    $locked = Folder::factory()->create(['is_protected' => true, 'password' => 'secret']);
+    $other = Folder::factory()->create(['is_protected' => true, 'password' => 'other']);
+    $media = uploadTo($from, 'photo');
+
+    expect(MediaMover::targets($from)->pluck('id'))->not->toContain($locked->id, $other->id);
+
+    gallery($from)
+        ->selectTableRecords([$media->getKey()])
+        ->callAction(moveAction(), data: ['folder' => $locked->id]);
+
+    expect($media->refresh()->collection_name)->toBe($from->collection);
+
+    // The password of another folder does not unlock it
+    session()->put('folder_password', 'other');
+
+    expect(MediaMover::targets($from)->pluck('id'))->toContain($other->id)->not->toContain($locked->id);
+});
+
+it('moves media to a protected folder unlocked in the session', function () {
+    $from = Folder::factory()->create();
+    $locked = Folder::factory()->create(['is_protected' => true, 'password' => 'secret']);
+    $media = uploadTo($from, 'photo');
+
+    session()->put('folder_password', 'secret');
+
+    gallery($from)
+        ->selectTableRecords([$media->getKey()])
+        ->callAction(moveAction(), data: ['folder' => $locked->id]);
+
+    expect($media->refresh()->collection_name)->toBe($locked->collection);
+});
