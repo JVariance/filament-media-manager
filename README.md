@@ -54,6 +54,7 @@ finally, register the plugin on `/app/Providers/Filament/AdminPanelProvider.php`
 
 - 📁 Manage your media files using spatie media library
 - 📂 Create folders and subfolders
+- 🔤 Web-safe file names for uploads, and a command to rename the files of existing media
 - 🔒 Set password for folders with secure access
 - 📝 Upload Files with Custom Fields using `->schema()`
 - 🤖 Auto Create Folders for Model/Collection/Record
@@ -423,6 +424,28 @@ you can allow create and manage subfolders on your media manager on `/app/Provid
         ->allowSubFolders()
 ])
 ```
+
+## Web-Safe File Names
+
+Uploads keep their file names by default. To give them names that work in every URL, turn on web-safe file names:
+
+```php
+FilamentMediaManagerPlugin::make()
+    ->webSafeFileNames()
+```
+
+The file name is transliterated in the app's language, lowercase, with hyphens for spaces and other characters; in German, "Ärger & Spaß.JPG" becomes "aerger-und-spass.jpg". The medium's name keeps its umlauts and capitals. A file name that another medium of the folder has already gets a number (`spass-2.jpg`). It applies to uploads in the media list, the picker and `MediaManagerInput`.
+
+`webSafeFileNames(dictionary: ['+' => 'plus'])` adds words for further characters, and `webSafeFileNames(language: 'de')` transliterates in another language than the app's (`&` and `@` have words already).
+
+To rename the files of media added before:
+
+```bash
+php artisan filament-media-manager:web-safe-file-names --dry-run
+php artisan filament-media-manager:web-safe-file-names --redirects=apache
+```
+
+`--dry-run` only shows the new names. A renamed file has a new URL: references by the medium's id or UUID (like the picker's) still work, but a URL written into a text or linked from elsewhere does not. `--redirects=apache` prints `Redirect 301` lines for an `.htaccess`, `--redirects=nginx` prints `location` blocks. Every renamed file also dispatches `TomatoPHP\FilamentMediaManager\Events\MediaFileRenamed` with its old and new URL, to add redirects in your app. Laravel serves missing files under `/storage` with its own route, so a redirect in `routes/web.php` is not reached there.
 
 ## Allow User Access
 

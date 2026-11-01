@@ -21,6 +21,15 @@ class FilamentMediaManagerPlugin implements Plugin
 
     public ?string $navigationIcon = null;
 
+    public bool $webSafeFileNames = false;
+
+    /**
+     * @var array<string, string>
+     */
+    public array $fileNameDictionary = [];
+
+    public ?string $fileNameLanguage = null;
+
     public function getId(): string
     {
         return 'filament-media-manager';
@@ -36,6 +45,21 @@ class FilamentMediaManagerPlugin implements Plugin
     public function allowUserAccess(bool $condation = true): static
     {
         $this->allowUserAccess = $condation;
+
+        return $this;
+    }
+
+    /**
+     * Name the files of uploads web-safe (WebSafeFileName): transliterated, lowercase, with hyphens
+     *
+     * @param  array<string, string>  $dictionary  words for further characters, e.g. ['+' => 'plus']
+     * @param  ?string  $language  the language to transliterate in, the app's by default
+     */
+    public function webSafeFileNames(bool $condition = true, array $dictionary = [], ?string $language = null): static
+    {
+        $this->webSafeFileNames = $condition;
+        $this->fileNameDictionary = $dictionary;
+        $this->fileNameLanguage = $language;
 
         return $this;
     }

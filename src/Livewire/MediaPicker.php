@@ -14,6 +14,7 @@ use Livewire\Attributes\On;
 use Livewire\Component;
 use TomatoPHP\FilamentMediaManager\Models\Folder;
 use TomatoPHP\FilamentMediaManager\Models\Media;
+use TomatoPHP\FilamentMediaManager\Services\WebSafeFileName;
 
 class MediaPicker extends Component implements HasActions, HasSchemas
 {
@@ -165,8 +166,7 @@ class MediaPicker extends Component implements HasActions, HasSchemas
                     }
 
                     // Pass file directly like CreateMediaAction does
-                    $media = $model
-                        ->addMedia($file)
+                    $media = WebSafeFileName::apply($model->addMedia($file), $model, $folder->collection ?? 'default')
                         ->toMediaCollection($folder->collection ?? 'default');
 
                     $uploadedMedia[] = $media->uuid;

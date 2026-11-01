@@ -5,6 +5,7 @@ namespace TomatoPHP\FilamentMediaManager;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 use TomatoPHP\FilamentMediaManager\Console\FilamentMediaManagerInstall;
+use TomatoPHP\FilamentMediaManager\Console\WebSafeFileNames;
 use TomatoPHP\FilamentMediaManager\Livewire\FolderComponent;
 use TomatoPHP\FilamentMediaManager\Livewire\MediaPicker;
 use TomatoPHP\FilamentMediaManager\Services\FilamentMediaManagerServices;
@@ -16,6 +17,7 @@ class FilamentMediaManagerServiceProvider extends ServiceProvider
         // Register generate command
         $this->commands([
             FilamentMediaManagerInstall::class,
+            WebSafeFileNames::class,
         ]);
 
         // Register Config file

@@ -6,6 +6,7 @@ use Filament\Actions;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use TomatoPHP\FilamentMediaManager\Models\Folder;
+use TomatoPHP\FilamentMediaManager\Services\WebSafeFileName;
 
 class CreateMediaAction
 {
@@ -35,14 +36,14 @@ class CreateMediaAction
                 $folder = Folder::find($folder_id);
                 if ($folder) {
                     if ($folder->model) {
-                        $folder->model->addMedia($data['file'])
+                        WebSafeFileName::apply($folder->model->addMedia($data['file']), $folder->model, $folder->collection)
                             ->withCustomProperties([
                                 'title' => $data['title'],
                                 'description' => $data['description'],
                             ])
                             ->toMediaCollection($folder->collection);
                     } else {
-                        $folder->addMedia($data['file'])
+                        WebSafeFileName::apply($folder->addMedia($data['file']), $folder, $folder->collection)
                             ->withCustomProperties([
                                 'title' => $data['title'],
                                 'description' => $data['description'],
