@@ -152,7 +152,8 @@
                 this.isSaving = false
             },
         }"
-        style="display: grid; gap: 0.75rem;"
+        {{-- A column no wider than the modal: the toolbar wraps instead of widening it --}}
+        style="display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem;"
     >
         {{-- Cropper.js replaces the image with its own elements, which Livewire must leave alone --}}
         <div x-ref="frame" wire:ignore style="height: 60vh; overflow: hidden; border-radius: 0.5rem; background-color: var(--gray-100);">
@@ -176,14 +177,14 @@
                 @endforeach
             </div>
 
-            <div style="display: flex; gap: 0.5rem;">
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                 <x-filament::icon-button type="button" color="gray" icon="heroicon-m-arrow-uturn-left" :label="trans('filament-media-manager::messages.media.editor.rotate_left')" :tooltip="trans('filament-media-manager::messages.media.editor.rotate_left')" x-on:click="rotate(-90)" />
                 <x-filament::icon-button type="button" color="gray" icon="heroicon-m-arrow-uturn-right" :label="trans('filament-media-manager::messages.media.editor.rotate_right')" :tooltip="trans('filament-media-manager::messages.media.editor.rotate_right')" x-on:click="rotate(90)" />
                 <x-filament::icon-button type="button" color="gray" icon="heroicon-m-arrows-right-left" :label="trans('filament-media-manager::messages.media.editor.flip_horizontal')" :tooltip="trans('filament-media-manager::messages.media.editor.flip_horizontal')" x-on:click="flip('x')" />
                 <x-filament::icon-button type="button" color="gray" icon="heroicon-m-arrows-up-down" :label="trans('filament-media-manager::messages.media.editor.flip_vertical')" :tooltip="trans('filament-media-manager::messages.media.editor.flip_vertical')" x-on:click="flip('y')" />
             </div>
 
-            <div style="display: flex; gap: 0.5rem;">
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                 <x-filament::icon-button type="button" color="gray" icon="heroicon-m-magnifying-glass-plus" :label="trans('filament-media-manager::messages.media.editor.zoom_in')" :tooltip="trans('filament-media-manager::messages.media.editor.zoom_in')" x-on:click="cropper.zoom(0.1)" />
                 <x-filament::icon-button type="button" color="gray" icon="heroicon-m-magnifying-glass-minus" :label="trans('filament-media-manager::messages.media.editor.zoom_out')" :tooltip="trans('filament-media-manager::messages.media.editor.zoom_out')" x-on:click="cropper.zoom(-0.1)" />
                 <x-filament::icon-button type="button" color="gray" icon="heroicon-m-scissors" :label="trans('filament-media-manager::messages.media.editor.crop')" :tooltip="trans('filament-media-manager::messages.media.editor.crop')" x-on:click="setDragMode('crop')" x-bind:style="(dragMode === 'crop') && 'outline: 2px solid var(--primary-500); color: var(--primary-500)'" />
@@ -191,7 +192,7 @@
                 <x-filament::icon-button type="button" color="gray" icon="heroicon-m-arrow-path" :label="trans('filament-media-manager::messages.media.editor.reset')" :tooltip="trans('filament-media-manager::messages.media.editor.reset')" x-on:click="reset()" />
             </div>
 
-            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--gray-500);">
+            <label style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; max-width: 100%; font-size: 0.875rem; color: var(--gray-500);">
                 {{ trans('filament-media-manager::messages.media.editor.straighten') }}
                 <input
                     type="range"
@@ -202,7 +203,7 @@
                     x-on:pointerdown="isDraggingStraighten = true"
                     x-on:pointerup.window="isDraggingStraighten = false"
                     x-on:input="setStraighten($event.target.value)"
-                    style="width: 10rem; accent-color: var(--primary-500);"
+                    style="width: 10rem; max-width: 100%; accent-color: var(--primary-500);"
                 />
                 <button
                     type="button"
