@@ -74,9 +74,12 @@
                     this.isUploading = true
 
                     $wire.upload(
-                        @js($statePath),
+                        @js("componentFileAttachments.{$statePath}"),
                         new File([blob], 'poster.jpg', { type: 'image/jpeg' }),
-                        () => this.isUploading = false,
+                        () => {
+                            this.isUploading = false
+                            this.state = @js(\TomatoPHP\FilamentMediaManager\Form\VideoPosterPicker::UPLOADED);
+                        },
                         () => {
                             this.isUploading = false
                             this.preview = null
@@ -86,9 +89,9 @@
                 }, 'image/jpeg', 0.85)
             },
 
-            // The image shown: a new one, or the current poster (not the name of an upload in the state)
+            // The image shown: a new one, or the current poster
             shown() {
-                return this.preview ?? ((typeof this.state === 'string') && ! this.state.startsWith('livewire-file:') ? this.state : null)
+                return this.preview ?? ((this.state !== @js(\TomatoPHP\FilamentMediaManager\Form\VideoPosterPicker::UPLOADED)) ? this.state : null)
             },
 
             remove() {
