@@ -12,6 +12,10 @@
 
     // Media are selected through the table, which shows the selection and its bulk actions
     $canSelect = $this->getTable()->isSelectionEnabled();
+
+    // Media can be dragged onto the sub folders and the folders in the breadcrumbs they can be moved to
+    $canDrag = $currentFolder && \TomatoPHP\FilamentMediaManager\Services\MediaMover::canMoveFrom($currentFolder);
+    $dropFolderIds = $canDrag ? \TomatoPHP\FilamentMediaManager\Services\MediaMover::targets($currentFolder)->pluck('id')->all() : [];
 @endphp
 
 <style>
@@ -84,6 +88,32 @@
         background-color: color-mix(in oklab, var(--primary-500) 12%, transparent);
         outline: 2px solid var(--primary-500);
         outline-offset: -2px;
+    }
+
+    .media-card[draggable="true"] {
+        cursor: grab;
+    }
+
+    .media-dragging .media-card {
+        opacity: 0.5;
+    }
+
+    .media-drop-target {
+        border-radius: 0.5rem;
+        outline: 2px dashed var(--primary-500);
+        outline-offset: 2px;
+        background-color: color-mix(in oklab, var(--primary-500) 12%, transparent);
+    }
+
+    .media-drag-image {
+        position: fixed;
+        top: -100px;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        background-color: var(--primary-600);
+        color: white;
+        font-size: 0.875rem;
+        font-weight: 600;
     }
 
     .media-trigger-slot {
@@ -403,7 +433,107 @@
 </style>
 
 @if(isset($records) || count($folders) > 0)
-<div class="media-grid">
+<div
+    class="media-grid"
+    @if($canDrag)
+        data-drop-folder-ids="{{ json_encode($dropFolderIds) }}"
+        x-data="{
+            dragged: [],
+            target: null,
+            controller: null,
+
+            init() {
+                this.controller = new AbortController()
+
+                const options = { signal: this.controller.signal }
+
+                // The breadcrumbs are outside the table, so the events are handled on the document
+                document.addEventListener('dragover', (event) => this.over(event), options)
+                document.addEventListener('drop', (event) => this.drop(event), options)
+            },
+
+            destroy() {
+                this.controller?.abort()
+            },
+
+            start(event, key) {
+                // The selected media on the page when the medium is one of them, otherwise the medium alone
+                this.dragged = isRecordSelected(key)
+                    ? Array.from($el.querySelectorAll('.media-item-checkbox'))
+                        .map((checkbox) => checkbox.value)
+                        .filter((selectedKey) => isRecordSelected(selectedKey))
+                    : [key]
+
+                event.dataTransfer.effectAllowed = 'move'
+                event.dataTransfer.setData('application/x-filament-media-manager', JSON.stringify(this.dragged))
+
+                if (this.dragged.length > 1) {
+                    const image = document.createElement('div')
+                    image.className = 'media-drag-image'
+                    image.textContent = this.dragged.length
+                    document.body.appendChild(image)
+                    event.dataTransfer.setDragImage(image, 0, 0)
+                    setTimeout(() => image.remove())
+                }
+
+                this.$nextTick(() => this.dragged.forEach((draggedKey) => $el.querySelector(`[data-media-key='${draggedKey}']`)?.classList.add('media-dragging')))
+            },
+
+            end() {
+                $el.querySelectorAll('.media-dragging').forEach((item) => item.classList.remove('media-dragging'))
+                this.highlight(null)
+                this.dragged = []
+            },
+
+            folderOf(event) {
+                const element = event.target.closest?.('[data-media-drop-folder], .fi-breadcrumbs a[href]')
+
+                if (! element) {
+                    return null
+                }
+
+                const id = Number(element.dataset.mediaDropFolder ?? new URL(element.href, window.location.href).searchParams.get('folder_id'))
+
+                return JSON.parse($el.dataset.dropFolderIds).includes(id) ? { element, id } : null
+            },
+
+            highlight(element) {
+                this.target?.classList.remove('media-drop-target')
+                this.target = element
+                this.target?.classList.add('media-drop-target')
+            },
+
+            over(event) {
+                if (! this.dragged.length) {
+                    return
+                }
+
+                const folder = this.folderOf(event)
+
+                this.highlight(folder?.element ?? null)
+
+                if (folder) {
+                    event.preventDefault()
+                    event.dataTransfer.dropEffect = 'move'
+                }
+            },
+
+            drop(event) {
+                const folder = this.dragged.length ? this.folderOf(event) : null
+
+                if (! folder) {
+                    return
+                }
+
+                event.preventDefault()
+
+                $wire.moveMediaToFolder(this.dragged, folder.id)
+
+                this.end()
+            },
+        }"
+    @endif
+>
     @if(isset($records))
         @foreach($records as $item)
             @if($item instanceof \TomatoPHP\FilamentMediaManager\Models\Folder)
@@ -414,6 +544,7 @@
                 @endphp
                 <div
                     class="media-item"
+                    data-media-key="{{ $recordKey }}"
                     {{-- The key of a table record, as Filament gives it --}}
                     wire:key="{{ $this->getId() }}.table.records.{{ $recordKey }}"
                     @if($canSelect)
@@ -452,7 +583,14 @@
                 @endif
                 <x-filament::modal  width="3xl" slide-over>
                 <x-slot name="trigger" class="media-trigger-slot">
-                    <div class="media-card">
+                    <div
+                        class="media-card"
+                        @if($canDrag)
+                            draggable="true"
+                            x-on:dragstart="start($event, @js($recordKey))"
+                            x-on:dragend="end()"
+                        @endif
+                    >
                         @php
                             $extension = strtolower(pathinfo($item->file_name, PATHINFO_EXTENSION));
                             $title = $item->hasCustomProperty('title') ? (!empty($item->getCustomProperty('title')) ? $item->getCustomProperty('title') : $item->name) : $item->name;
@@ -522,9 +660,9 @@
                         <div class="media-preview {{ str($item->mime_type)->contains(['image', 'video']) ? 'media-preview-with-bg' : '' }}"
                              x-data>
                             @if(str($item->mime_type)->contains('image'))
-                                <img src="{{ $item->getUrl() }}" alt="{{ $title }}" />
+                                <img src="{{ $item->getUrl() }}" alt="{{ $title }}" draggable="false" />
                             @elseif(str($item->mime_type)->contains('video'))
-                                <video src="{{ $item->getUrl() }}"></video>
+                                <video src="{{ $item->getUrl() }}" draggable="false"></video>
                             @elseif(str($item->mime_type)->contains('audio'))
                                 <x-filament::icon name="heroicon-o-musical-note" class="media-icon-large" style="color: #ec4899;" />
                             @else
@@ -734,7 +872,9 @@
     @endif
     @if(filament('filament-media-manager')->allowSubFolders)
         @foreach($folders as $folder)
-            @livewire(\TomatoPHP\FilamentMediaManager\Livewire\FolderComponent::class, ['item' => $folder], key('folder-' . $folder->id))
+            <div @if(in_array($folder->id, $dropFolderIds, true)) data-media-drop-folder="{{ $folder->id }}" @endif>
+                @livewire(\TomatoPHP\FilamentMediaManager\Livewire\FolderComponent::class, ['item' => $folder], key('folder-' . $folder->id))
+            </div>
         @endforeach
     @endif
 </div>
