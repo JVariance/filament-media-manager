@@ -10,6 +10,7 @@ use Filament\Resources\Pages\ManageRecords;
 use Filament\Support\Enums\Width;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\HtmlString;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use TomatoPHP\FilamentMediaManager\Form\FocalPointPicker;
 use TomatoPHP\FilamentMediaManager\Form\ImageEditorField;
@@ -297,7 +298,10 @@ class ListMedia extends ManageRecords
             ->color('gray')
             ->visible(fn (array $arguments): bool => ($image = $media($arguments)) && ImageEditor::supports($image))
             ->authorize(fn (array $arguments): bool => ($image = $media($arguments)) && static::getResource()::canEdit($image))
-            ->modalHeading(fn (array $arguments): string => trans('filament-media-manager::messages.media.editor.label') . ': ' . $media($arguments)?->file_name)
+            // A long file name has no place to break; on a narrow screen it would widen the page
+            ->modalHeading(fn (array $arguments): HtmlString => new HtmlString(
+                e(trans('filament-media-manager::messages.media.editor.label')) . ': <span style="overflow-wrap: anywhere;">' . e($media($arguments)?->file_name) . '</span>'
+            ))
             ->modalWidth(Width::SixExtraLarge)
             ->schema(fn (array $arguments): array => [
                 ImageEditorField::make('image')
