@@ -105,5 +105,11 @@ return [
             'capture_failed' => 'Bu videodan kare alınamadı. Bunun yerine bir görsel yükleyin.',
             'invalid' => 'Kapak görseli JPEG, PNG veya WebP olmalıdır.',
         ],
+        'focal' => [
+            'label' => 'Odak noktası',
+            'help' => 'En önemli noktaya tıklayın. Görsel veya video kırpıldığında bu nokta görünür kalır.',
+            'center' => 'Orta (varsayılan)',
+            'reset' => 'Sıfırla',
+        ],
     ],
 ];

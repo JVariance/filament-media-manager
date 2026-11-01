@@ -546,9 +546,9 @@
                         <div class="media-preview {{ str($item->mime_type)->contains(['image', 'video']) ? 'media-preview-with-bg' : '' }}"
                              x-data>
                             @if(str($item->mime_type)->contains('image'))
-                                <img src="{{ $item->getUrl() }}" alt="{{ $title }}" draggable="false" />
+                                <img src="{{ $item->getUrl() }}" alt="{{ $title }}" style="{{ \TomatoPHP\FilamentMediaManager\Services\FocalPoint::style($item) }}" draggable="false" />
                             @elseif(str($item->mime_type)->contains('video'))
-                                <video src="{{ $item->getUrl() }}" @if($poster = \TomatoPHP\FilamentMediaManager\Services\VideoPoster::url($item)) poster="{{ $poster }}" @endif preload="metadata" draggable="false"></video>
+                                <video src="{{ $item->getUrl() }}" style="{{ \TomatoPHP\FilamentMediaManager\Services\FocalPoint::style($item) }}" @if($poster = \TomatoPHP\FilamentMediaManager\Services\VideoPoster::url($item)) poster="{{ $poster }}" @endif preload="metadata" draggable="false"></video>
                             @elseif(str($item->mime_type)->contains('audio'))
                                 <x-filament::icon name="heroicon-o-musical-note" class="media-icon-large" style="color: #ec4899;" />
                             @else
@@ -719,7 +719,8 @@
                             </div>
                             @if($item->custom_properties)
                                 @foreach($item->custom_properties as $key=>$value)
-                                    @if($value)
+                                    {{-- Only text and numbers; e.g. the focal point is an array --}}
+                                    @if($value && is_scalar($value))
                                         <div>
                                             <div>
                                                 <h1 class="media-subtitle">{{str($key)->title()}}</h1>

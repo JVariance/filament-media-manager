@@ -62,6 +62,7 @@ finally, register the plugin on `/app/Providers/Filament/AdminPanelProvider.php`
 - 🗂️ Move folders into other folders or up to the top level
 - 🎞️ Poster images for videos, taken from a frame or uploaded
 - 📐 Width and height of images and videos stored on upload
+- 🎯 Focal points for images and videos, kept in view where they are cropped
 - 🔒 Set password for folders with secure access
 - 📝 Upload Files with Custom Fields using `->schema()`
 - 🤖 Auto Create Folders for Model/Collection/Record
@@ -475,6 +476,16 @@ php artisan filament-media-manager:dimensions
 ```
 
 `--force` measures media that have dimensions already, too.
+
+## Focal Points
+
+When editing an image or a video, click on its most important spot to set the focal point; a video shows its poster image, or its first frame without one. It is stored in the custom property `focal` as `['x' => 0–100, 'y' => 0–100]` in percent from the top left, and the thumbnails of the media manager are cropped around it. Where your frontend crops a medium with `object-fit: cover`, keep the point in view:
+
+```blade
+<img src="{{ $media->getUrl() }}" style="object-fit: cover; {{ \TomatoPHP\FilamentMediaManager\Services\FocalPoint::style($media) }}" alt="">
+```
+
+`FocalPoint::get($media)` gives the point itself, null for the center.
 
 ## Allow User Access
 

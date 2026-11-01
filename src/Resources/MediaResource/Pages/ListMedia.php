@@ -9,6 +9,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ManageRecords;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use TomatoPHP\FilamentMediaManager\Form\FocalPointPicker;
 use TomatoPHP\FilamentMediaManager\Form\VideoPosterPicker;
 use TomatoPHP\FilamentMediaManager\Models\Folder;
 use TomatoPHP\FilamentMediaManager\Models\Media;
@@ -19,6 +20,7 @@ use TomatoPHP\FilamentMediaManager\Resources\Actions\EditCurrentFolderAction;
 use TomatoPHP\FilamentMediaManager\Resources\Actions\MoveFolderAction;
 use TomatoPHP\FilamentMediaManager\Resources\FolderResource;
 use TomatoPHP\FilamentMediaManager\Resources\MediaResource;
+use TomatoPHP\FilamentMediaManager\Services\FocalPoint;
 use TomatoPHP\FilamentMediaManager\Services\FolderBreadcrumbs;
 use TomatoPHP\FilamentMediaManager\Services\FolderMover;
 use TomatoPHP\FilamentMediaManager\Services\MediaMover;
@@ -234,6 +236,7 @@ class ListMedia extends ManageRecords
                     'title' => $media->getCustomProperty('title'),
                     'description' => $media->getCustomProperty('description'),
                     'alt' => $media->getCustomProperty('alt'),
+                    'focal' => FocalPoint::get($media),
                 ];
             })
             ->schema(fn (array $arguments): array => [
@@ -251,6 +254,11 @@ class ListMedia extends ManageRecords
                     ->label(trans('filament-media-manager::messages.media.poster.label'))
                     ->media(fn (): ?Media => Media::find($arguments['record']['id'] ?? null))
                     ->visible(fn (): bool => ($media = Media::find($arguments['record']['id'] ?? null)) && VideoPoster::isVideo($media)),
+                FocalPointPicker::make('focal')
+                    ->label(trans('filament-media-manager::messages.media.focal.label'))
+                    ->helperText(trans('filament-media-manager::messages.media.focal.help'))
+                    ->media(fn (): ?Media => Media::find($arguments['record']['id'] ?? null))
+                    ->visible(fn (): bool => ($media = Media::find($arguments['record']['id'] ?? null)) && FocalPoint::supports($media)),
             ])
             ->action(function (array $arguments, array $data) {
                 $media = Media::find($arguments['record']['id']);
@@ -258,6 +266,11 @@ class ListMedia extends ManageRecords
                 $media->setCustomProperty('title', $data['title']);
                 $media->setCustomProperty('description', $data['description']);
                 $media->setCustomProperty('alt', $data['alt']);
+
+                if (FocalPoint::supports($media)) {
+                    FocalPoint::set($media, $data['focal'] ?? null);
+                }
+
                 $media->save();
 
                 if (VideoPoster::isVideo($media)) {
