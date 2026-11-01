@@ -551,8 +551,13 @@
                             'media-item-selected': isRecordSelected(@js($recordKey)),
                             'media-item-selecting': getSelectedRecordsCount() > 0,
                         }"
-                        {{-- Shift-click would select the text of the cards --}}
-                        x-on:mousedown="if ($event.shiftKey && $event.target.closest('.fi-modal-trigger')) $event.preventDefault()"
+                        {{-- Shift-click on a card or its checkbox would select the text of the cards in between --}}
+                        x-on:mousedown="
+                            if (! $event.shiftKey) return
+                            if (! ($event.target.closest('.fi-modal-trigger') || $event.target.matches('.media-item-checkbox'))) return
+                            $event.preventDefault()
+                            window.getSelection()?.removeAllRanges()
+                        "
                         {{-- While media are selected, or with Shift, Cmd or Ctrl, a click on the card selects instead of showing the details --}}
                         x-on:click.capture="
                             if (! $event.target.closest('.fi-modal-trigger')) return

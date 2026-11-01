@@ -45,7 +45,8 @@ class MediaMover
     }
 
     /**
-     * Folders the media of a folder can be moved to, by name
+     * Folders the media of a folder can be moved to, by name. Without access to a folder, it is not offered and
+     * nothing can be dropped on it, neither in the grid nor in the breadcrumbs.
      *
      * @return Builder<Folder>
      */
@@ -57,6 +58,15 @@ class MediaMover
             ->whereNotNull('collection')
             ->where('collection', '!=', '')
             ->orderBy('name');
+
+        // A protected folder only once it is unlocked: the password given in this session must be its own
+        $locked = Folder::query()
+            ->where('is_protected', true)
+            ->get()
+            ->reject(fn (Folder $folder): bool => FolderAccess::passwordMatches($folder, session('folder_password')))
+            ->modelKeys();
+
+        $query->whereKeyNot($locked);
 
         if (filament('filament-media-manager')->allowUserAccess && ($user = auth()->user())) {
             $query->where(fn (Builder $query) => $query
