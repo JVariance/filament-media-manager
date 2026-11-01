@@ -159,8 +159,9 @@
             <img x-ref="image" src="{{ $getSourceUrl() }}" alt="" style="display: block; max-width: 100%;" />
         </div>
 
+        {{-- The active ratio and tool get an outline and the primary color; the gaps leave room for the outline --}}
         <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem;">
-            <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                 {{-- @js() is not compiled in the attributes of a Blade component, {{ }} is --}}
                 @foreach ($getAspectRatios() as $label => $ratio)
                     <x-filament::button
@@ -168,25 +169,25 @@
                         size="xs"
                         color="gray"
                         x-on:click="setRatio({{ \Illuminate\Support\Js::from($ratio) }})"
-                        x-bind:style="(ratio === {{ \Illuminate\Support\Js::from($ratio) }}) && 'outline: 2px solid var(--primary-500)'"
+                        x-bind:style="(ratio === {{ \Illuminate\Support\Js::from($ratio) }}) && 'outline: 2px solid var(--primary-500); color: var(--primary-500)'"
                     >
                         {{ $label }}
                     </x-filament::button>
                 @endforeach
             </div>
 
-            <div style="display: flex; gap: 0.25rem;">
+            <div style="display: flex; gap: 0.5rem;">
                 <x-filament::icon-button type="button" color="gray" icon="heroicon-m-arrow-uturn-left" :label="trans('filament-media-manager::messages.media.editor.rotate_left')" :tooltip="trans('filament-media-manager::messages.media.editor.rotate_left')" x-on:click="rotate(-90)" />
                 <x-filament::icon-button type="button" color="gray" icon="heroicon-m-arrow-uturn-right" :label="trans('filament-media-manager::messages.media.editor.rotate_right')" :tooltip="trans('filament-media-manager::messages.media.editor.rotate_right')" x-on:click="rotate(90)" />
                 <x-filament::icon-button type="button" color="gray" icon="heroicon-m-arrows-right-left" :label="trans('filament-media-manager::messages.media.editor.flip_horizontal')" :tooltip="trans('filament-media-manager::messages.media.editor.flip_horizontal')" x-on:click="flip('x')" />
                 <x-filament::icon-button type="button" color="gray" icon="heroicon-m-arrows-up-down" :label="trans('filament-media-manager::messages.media.editor.flip_vertical')" :tooltip="trans('filament-media-manager::messages.media.editor.flip_vertical')" x-on:click="flip('y')" />
             </div>
 
-            <div style="display: flex; gap: 0.25rem;">
+            <div style="display: flex; gap: 0.5rem;">
                 <x-filament::icon-button type="button" color="gray" icon="heroicon-m-magnifying-glass-plus" :label="trans('filament-media-manager::messages.media.editor.zoom_in')" :tooltip="trans('filament-media-manager::messages.media.editor.zoom_in')" x-on:click="cropper.zoom(0.1)" />
                 <x-filament::icon-button type="button" color="gray" icon="heroicon-m-magnifying-glass-minus" :label="trans('filament-media-manager::messages.media.editor.zoom_out')" :tooltip="trans('filament-media-manager::messages.media.editor.zoom_out')" x-on:click="cropper.zoom(-0.1)" />
-                <x-filament::icon-button type="button" color="gray" icon="heroicon-m-scissors" :label="trans('filament-media-manager::messages.media.editor.crop')" :tooltip="trans('filament-media-manager::messages.media.editor.crop')" x-on:click="setDragMode('crop')" x-bind:style="(dragMode === 'crop') && 'outline: 2px solid var(--primary-500)'" />
-                <x-filament::icon-button type="button" color="gray" icon="heroicon-m-hand-raised" :label="trans('filament-media-manager::messages.media.editor.move')" :tooltip="trans('filament-media-manager::messages.media.editor.move')" x-on:click="setDragMode('move')" x-bind:style="(dragMode === 'move') && 'outline: 2px solid var(--primary-500)'" />
+                <x-filament::icon-button type="button" color="gray" icon="heroicon-m-scissors" :label="trans('filament-media-manager::messages.media.editor.crop')" :tooltip="trans('filament-media-manager::messages.media.editor.crop')" x-on:click="setDragMode('crop')" x-bind:style="(dragMode === 'crop') && 'outline: 2px solid var(--primary-500); color: var(--primary-500)'" />
+                <x-filament::icon-button type="button" color="gray" icon="heroicon-m-hand-raised" :label="trans('filament-media-manager::messages.media.editor.move')" :tooltip="trans('filament-media-manager::messages.media.editor.move')" x-on:click="setDragMode('move')" x-bind:style="(dragMode === 'move') && 'outline: 2px solid var(--primary-500); color: var(--primary-500)'" />
                 <x-filament::icon-button type="button" color="gray" icon="heroicon-m-arrow-path" :label="trans('filament-media-manager::messages.media.editor.reset')" :tooltip="trans('filament-media-manager::messages.media.editor.reset')" x-on:click="reset()" />
             </div>
 
