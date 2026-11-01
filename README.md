@@ -55,6 +55,7 @@ finally, register the plugin on `/app/Providers/Filament/AdminPanelProvider.php`
 - 📁 Manage your media files using spatie media library
 - 📂 Create folders and subfolders
 - 🎞️ Poster images for videos, taken from a frame or uploaded
+- 🎯 Focal points for images and videos, kept in view where they are cropped
 - 🔒 Set password for folders with secure access
 - 📝 Upload Files with Custom Fields using `->schema()`
 - 🤖 Auto Create Folders for Model/Collection/Record
@@ -438,6 +439,16 @@ The image is stored next to the video (`{media directory}/posters/`), its file n
 The package's `Media` model also has `$media->getPosterUrl()`.
 
 To take a frame, the browser has to load the video from the panel's own origin, so the plugin registers an authenticated panel route that serves it (with range requests for seeking). If your plugin class overrides `register()`, call `$this->registerRoutes($panel)` in it.
+
+## Focal Points
+
+When editing an image or a video, click on its most important spot to set the focal point; a video shows its poster image, or its first frame without one. It is stored in the custom property `focal` as `['x' => 0–100, 'y' => 0–100]` in percent from the top left, and the thumbnails of the media manager are cropped around it. Where your frontend crops a medium with `object-fit: cover`, keep the point in view:
+
+```blade
+<img src="{{ $media->getUrl() }}" style="object-fit: cover; {{ \TomatoPHP\FilamentMediaManager\Services\FocalPoint::style($media) }}" alt="">
+```
+
+`FocalPoint::get($media)` gives the point itself, null for the center.
 
 ## Allow User Access
 

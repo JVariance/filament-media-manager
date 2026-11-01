@@ -89,6 +89,12 @@ return [
             'capture_failed' => 'The frame could not be taken from this video. Upload an image instead.',
             'invalid' => 'The poster must be a JPEG, PNG or WebP image.',
         ],
+        'focal' => [
+            'label' => 'Focal point',
+            'help' => 'Click on the most important spot. Where the image or video is cropped, it stays in view.',
+            'center' => 'Center (default)',
+            'reset' => 'Reset',
+        ],
     ],
     'picker' => [
         'title' => 'Select Media',
