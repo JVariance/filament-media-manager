@@ -364,9 +364,16 @@
                                         }">
                                         {{ $folder->name }}
                                     </h1>
-                                    <p class="folder-date-picker-{{$folder->id}}">
-                                        {{ $folder->created_at->diffForHumans() }}
-                                    </p>
+                                    {{-- In the search results, the folder it is in --}}
+                                    @if(filled($search) && $folder->picker_location)
+                                        <p class="folder-date-picker-{{$folder->id}}" title="{{ $folder->picker_location }}">
+                                            {{ $folder->picker_location }}
+                                        </p>
+                                    @else
+                                        <p class="folder-date-picker-{{$folder->id}}">
+                                            {{ $folder->created_at->diffForHumans() }}
+                                        </p>
+                                    @endif
                                 </div>
                             </div>
                         </button>
@@ -602,9 +609,9 @@
                                             {{ $title }}
                                         </h1>
                                         {{-- In the search results, the folder the medium is in --}}
-                                        @if($mediaItem->relationLoaded('pickerFolder') && $mediaItem->pickerFolder)
-                                            <p class="media-timestamp-picker-{{$mediaItem->id}}" title="{{ $mediaItem->pickerFolder->name }}">
-                                                {{ $mediaItem->pickerFolder->name }}
+                                        @if(filled($search) && $mediaItem->picker_location)
+                                            <p class="media-timestamp-picker-{{$mediaItem->id}}" title="{{ $mediaItem->picker_location }}">
+                                                {{ $mediaItem->picker_location }}
                                             </p>
                                         @else
                                             <p class="media-timestamp-picker-{{$mediaItem->id}}">

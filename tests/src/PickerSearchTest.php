@@ -42,7 +42,7 @@ function searchPicker(array $parameters = [])
     return livewire(MediaPicker::class, ['pickerKey' => 'picker', ...$parameters]);
 }
 
-it('finds media in all folders and sub folders, and names their folder', function () {
+it('finds media in all folders and sub folders, and names the path of their folder', function () {
     $offers = searchFolder('Offers');
     $students = searchFolder('Students', parent: $offers);
     $other = searchFolder('Other');
@@ -53,8 +53,17 @@ it('finds media in all folders and sub folders, and names their folder', functio
 
     searchPicker()
         ->set('search', 'harbour')
-        ->assertSee(['Search results in all folders', 'harbour-front', 'harbour-room', 'Offers', 'Students'])
+        ->assertSee(['Search results in all folders', 'harbour-front', 'harbour-room', 'Offers › Students'])
         ->assertDontSee('garden');
+});
+
+it('tells folders of the same name apart by the path of the folder they are in', function () {
+    searchFolder('Harbour', parent: searchFolder('Floor plans'));
+    searchFolder('Harbour', parent: searchFolder('References'));
+
+    searchPicker()
+        ->set('search', 'harbour')
+        ->assertSee(['Floor plans', 'References']);
 });
 
 it('searches all folders from inside a folder too', function () {
@@ -72,10 +81,11 @@ it('finds folders of all levels by name', function () {
     $offers = searchFolder('Offers');
     searchFolder('Harbour flats', parent: searchFolder('Rentals', parent: $offers));
 
-    searchPicker()
+    $picker = searchPicker()
         ->set('search', 'harbour')
-        ->assertSee('Harbour flats')
-        ->assertDontSee('Rentals');
+        ->assertSee(['Harbour flats', 'Offers › Rentals']);
+
+    expect($picker->instance()->folders->pluck('name')->all())->toBe(['Harbour flats']);
 });
 
 it('leaves out the media of a locked folder and of the folders below it until it is opened with its password', function () {
