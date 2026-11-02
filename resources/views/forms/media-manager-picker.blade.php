@@ -6,7 +6,8 @@
 
     if ($state) {
         $uuids = is_array($state) ? $state : [$state];
-        $media = \TomatoPHP\FilamentMediaManager\Models\Media::whereIn('uuid', $uuids)->get()->keyBy('uuid');
+        // Without the folder of the media page in the session, which would hide media of other folders
+        $media = \TomatoPHP\FilamentMediaManager\Models\Media::withoutGlobalScope('folder')->whereIn('uuid', $uuids)->get()->keyBy('uuid');
 
         // Order media items according to state array order
         foreach ($uuids as $uuid) {

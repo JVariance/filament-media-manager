@@ -64,7 +64,8 @@ class MediaManagerPicker extends Field
             }
 
             $mediaIds = $mediaData->pluck('media_id')->toArray();
-            $media = Media::whereIn('id', $mediaIds)->get()->keyBy('id');
+            // Without the folder of the media page in the session, which would leave out media of other folders
+            $media = Media::withoutGlobalScope('folder')->whereIn('id', $mediaIds)->get()->keyBy('id');
 
             // Sort media by order_column
             $orderedMedia = $mediaData->map(function ($item) use ($media) {
@@ -107,7 +108,8 @@ class MediaManagerPicker extends Field
 
             // Get media by UUIDs and maintain order
             $uuids = is_array($state) ? $state : [$state];
-            $media = Media::whereIn('uuid', $uuids)->get()->keyBy('uuid');
+            // Without the folder of the media page in the session, which would detach media of other folders
+            $media = Media::withoutGlobalScope('folder')->whereIn('uuid', $uuids)->get()->keyBy('uuid');
 
             // Create new attachments with order, collection name, and responsive images flag
             $order = 0;
