@@ -152,6 +152,7 @@ return [
         'back' => 'Zurück',
         'breadcrumbs' => 'Ordnerpfad',
         'search' => 'Ordner und Dateien durchsuchen …',
+        'search_results' => 'Suchergebnisse in allen Ordnern',
         'select_folder' => 'Ordner auswählen, um seine Medien zu sehen',
         'folders' => 'Ordner',
         'media_files' => 'Medien',
@@ -163,5 +164,7 @@ return [
         'confirm_remove_message' => 'Soll dieses Medium wirklich entfernt werden?',
         'create_folder' => 'Neuer Ordner',
         'folder_created' => 'Ordner angelegt',
+        'missing' => 'Nicht mehr vorhanden',
+        'missing_description' => 'Aus der Medienbibliothek gelöscht',
     ],
 ];
