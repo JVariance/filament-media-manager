@@ -14,7 +14,7 @@ use TomatoPHP\FilamentMediaManager\Models\Folder;
 use TomatoPHP\FilamentMediaManager\Models\Media;
 use TomatoPHP\FilamentMediaManager\Resources\Actions\DownloadMediaBulkAction;
 use TomatoPHP\FilamentMediaManager\Resources\Actions\MoveMediaBulkAction;
-use TomatoPHP\FilamentMediaManager\Resources\MediaResource\Pages;
+use TomatoPHP\FilamentMediaManager\Resources\MediaResource\Pages\ListMedia;
 use TomatoPHP\FilamentMediaManager\Services\MediaMover;
 
 class MediaResource extends Resource
@@ -53,7 +53,14 @@ class MediaResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(function (Builder $query) {
+            ->modifyQueryUsing(function (Builder $query, $livewire) {
+                // A search looks in all folders that are open, not only in the one of the page
+                if ($livewire instanceof ListMedia && $livewire->searchesAllFolders()) {
+                    $livewire->scopeToSearchableFolders($query);
+
+                    return;
+                }
+
                 if (request()->has('folder_id') && ! empty('folder_id')) {
                     $folder = Folder::find(request()->input('folder_id'));
                     if ($folder) {
@@ -209,8 +216,10 @@ class MediaResource extends Resource
                 Actions\BulkActionGroup::make([
                     DownloadMediaBulkAction::make(),
                     MoveMediaBulkAction::make(),
+                    // Not in a search, whose media are from several folders: the permission is the one of the open folder
                     Actions\DeleteBulkAction::make()
-                        ->visible(fn (): bool => ($folder = Folder::query()->find(session('folder_id'))) && MediaMover::canManage($folder)),
+                        ->visible(fn ($livewire): bool => ! ($livewire instanceof ListMedia && $livewire->searchesAllFolders())
+                            && ($folder = Folder::query()->find(session('folder_id'))) && MediaMover::canManage($folder)),
                 ]),
             ]);
     }
@@ -225,7 +234,7 @@ class MediaResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListMedia::route('/'),
+            'index' => ListMedia::route('/'),
         ];
     }
 }

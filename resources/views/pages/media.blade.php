@@ -1,6 +1,13 @@
 @php
     $currentFolder = \TomatoPHP\FilamentMediaManager\Models\Folder::find($this->folder_id);
-    if(filament('filament-media-manager')->allowSubFolders){
+
+    // A search looks in all folders: it shows the folders of all levels whose name matches, not the sub folders
+    $searching = $this->searchesAllFolders();
+
+    if ($searching) {
+        $folders = $this->getSearchedFolders();
+    }
+    elseif(filament('filament-media-manager')->allowSubFolders){
         $folders = \TomatoPHP\FilamentMediaManager\Models\Folder::query()
             ->where('model_type', \TomatoPHP\FilamentMediaManager\Models\Folder::class)
             ->where('model_id', $this->folder_id)
@@ -15,7 +22,7 @@
 
     // Media can be dragged onto the sub folders and the folders in the breadcrumbs they can be moved to, and so can
     // the sub folders (FolderMover::targetIds())
-    $canDrag = $currentFolder && \TomatoPHP\FilamentMediaManager\Services\MediaMover::canMoveFrom($currentFolder);
+    $canDrag = ! $searching && $currentFolder && \TomatoPHP\FilamentMediaManager\Services\MediaMover::canMoveFrom($currentFolder);
     $dropFolderIds = $canDrag ? \TomatoPHP\FilamentMediaManager\Services\MediaMover::targets($currentFolder)->pluck('id')->all() : [];
 @endphp
 
@@ -434,6 +441,32 @@
 
 @include('filament-media-manager::partials.drag-and-drop-styles')
 
+@if($searching)
+    <style>
+        .media-search-heading {
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: rgb(55 65 81);
+        }
+
+        .media-search-heading:where(.dark, .dark *) {
+            color: rgb(209 213 219);
+        }
+    </style>
+
+    <p class="media-search-heading">{{ trans('filament-media-manager::messages.picker.search_results') }}</p>
+
+    @if(! $this->folder)
+        {{-- Coming from the search of the folders list, typing goes on here --}}
+        <div x-data x-init="$nextTick(() => {
+            const input = document.querySelector('.fi-ta-search-field input')
+            input?.focus()
+            input?.setSelectionRange(input.value.length, input.value.length)
+        })"></div>
+    @endif
+@endif
+
 @if(isset($records) || count($folders) > 0)
 <div
     class="media-grid"
@@ -604,9 +637,16 @@
                                 }">
                                 {{ $title }}
                             </h1>
-                            <p class="media-timestamp">
-                                {{ $item->created_at->diffForHumans() }}
-                            </p>
+                            {{-- In the search results, the folder the medium is in --}}
+                            @if($searching && ($location = $this->getSearchedMediaLocation($item)))
+                                <p class="media-timestamp" title="{{ $location }}">
+                                    {{ $location }}
+                                </p>
+                            @else
+                                <p class="media-timestamp">
+                                    {{ $item->created_at->diffForHumans() }}
+                                </p>
+                            @endif
                         </div>
                     </div>
                 </x-slot>
@@ -771,38 +811,30 @@
                     </div>
                 </div>
 
-                    @if(filament('filament-media-manager')->allowUserAccess && (!empty($currentFolder->user_id)))
-                        @if($currentFolder->user_id === auth()->user()->id && $currentFolder->user_type === get_class(auth()->user()))
-                            <x-slot name="footer">
-                                {{ ($this->downloadMedia)(['record' => $item]) }}
-                                {{ ($this->editMedia)(['record' => $item]) }}
-                                {{ ($this->editImage)(['record' => $item]) }}
-                                {{ ($this->deleteMedia)(['record' => $item]) }}
-                            </x-slot>
-                        @else
-                            {{-- Downloading only reads the file, so it is offered in folders of other users too --}}
-                            <x-slot name="footer">
-                                {{ ($this->downloadMedia)(['record' => $item]) }}
-                            </x-slot>
-                        @endif
-                    @else
-                        <x-slot name="footer">
-                            {{ ($this->downloadMedia)(['record' => $item]) }}
-                            {{ ($this->editMedia)(['record' => $item]) }}
-                            {{ ($this->editImage)(['record' => $item]) }}
-                            {{ ($this->deleteMedia)(['record' => $item]) }}
-                        </x-slot>
-                    @endif
+                    @php
+                        // In a search, the folder of the medium decides, not the open one
+                        $itemFolder = $searching ? $this->getSearchedMediaFolder($item) : $currentFolder;
+
+                        // With user access, a medium in a folder of another user can only be read
+                        $canChange = ! (filament('filament-media-manager')->allowUserAccess && ! empty($itemFolder?->user_id))
+                            || ($itemFolder->user_id === auth()->user()->id && $itemFolder->user_type === get_class(auth()->user()));
+                    @endphp
+                    <x-slot name="footer">
+                        @foreach($canChange ? $this->getMediaDetailsActions() : $this->getMediaDetailsReadOnlyActions() as $action)
+                            {{ ($this->{$action})(['record' => $item]) }}
+                        @endforeach
+                    </x-slot>
 
             </x-filament::modal>
                 </div>
             @endif
         @endforeach
     @endif
-    @if(filament('filament-media-manager')->allowSubFolders)
+    @if($searching || filament('filament-media-manager')->allowSubFolders)
         @foreach($folders as $folder)
             @php
-                $folderTargets = \TomatoPHP\FilamentMediaManager\Services\FolderMover::targetIds($folder);
+                // Folders found by a search are not moved from here
+                $folderTargets = $searching ? [] : \TomatoPHP\FilamentMediaManager\Services\FolderMover::targetIds($folder);
             @endphp
             <div
                 data-media-drop-folder="{{ $folder->id }}"
@@ -813,7 +845,8 @@
                     x-on:dragend="end()"
                 @endif
             >
-                @livewire(\TomatoPHP\FilamentMediaManager\Livewire\FolderComponent::class, ['item' => $folder], key('folder-' . $folder->id))
+                {{-- In the search results with the folder it is in; a key of its own, as the card keeps its properties --}}
+                @livewire(\TomatoPHP\FilamentMediaManager\Livewire\FolderComponent::class, ['item' => $folder, 'location' => $searching ? $folder->search_location : null], key('folder-' . $folder->id . ($searching ? '-search' : '')))
             </div>
         @endforeach
     @endif

@@ -15,7 +15,6 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
-use Livewire\Attributes\On;
 use Livewire\Component;
 use TomatoPHP\FilamentMediaManager\Models\Folder;
 use TomatoPHP\FilamentMediaManager\Models\Media;
@@ -23,6 +22,7 @@ use TomatoPHP\FilamentMediaManager\Resources\Actions\EditCurrentFolderAction;
 use TomatoPHP\FilamentMediaManager\Resources\Schemas\FolderForm;
 use TomatoPHP\FilamentMediaManager\Services\FolderBreadcrumbs;
 use TomatoPHP\FilamentMediaManager\Services\FolderLocks;
+use TomatoPHP\FilamentMediaManager\Services\FolderMedia;
 use TomatoPHP\FilamentMediaManager\Services\WebSafeFileName;
 
 class MediaPicker extends Component implements HasActions, HasSchemas
@@ -525,45 +525,9 @@ class MediaPicker extends Component implements HasActions, HasSchemas
 
         // Remove the global scope temporarily to get media
         $query = Media::withoutGlobalScope('folder');
-        $this->scopeToFolder($query, $folder);
+        FolderMedia::scope($query, $folder);
 
         return $query->get();
-    }
-
-    /**
-     * Filter media based on folder structure (same logic as Media model's global scope)
-     */
-    protected function scopeToFolder(Builder $query, Folder $folder): void
-    {
-        if ($folder->model_type && $folder->model_id) {
-            // Instance folder - show only media belonging to this specific model instance
-            $query->where('model_type', $folder->model_type)
-                ->where('model_id', $folder->model_id)
-                ->where('collection_name', $folder->collection);
-        } elseif ($folder->model_type && ! $folder->model_id) {
-            // Collection folder - show media without model_id (not belonging to specific instances)
-            $query->where('collection_name', $folder->collection)
-                ->whereNull('model_id');
-        } else {
-            // Regular folder - show all media in collection
-            $query->where('collection_name', $folder->collection);
-        }
-    }
-
-    /**
-     * Whether a medium is in the folder, like scopeToFolder() decides it
-     */
-    protected function folderHolds(Folder $folder, Media $medium): bool
-    {
-        if ($folder->collection !== $medium->collection_name) {
-            return false;
-        }
-
-        if ($folder->model_type && $folder->model_id) {
-            return $medium->model_type === $folder->model_type && (string) $medium->model_id === (string) $folder->model_id;
-        }
-
-        return ! $folder->model_type || $medium->model_id === null;
     }
 
     /**
@@ -598,11 +562,7 @@ class MediaPicker extends Component implements HasActions, HasSchemas
         }
 
         $media = Media::withoutGlobalScope('folder')
-            ->where(function (Builder $query) use ($folders): void {
-                foreach ($folders as $folder) {
-                    $query->orWhere(fn (Builder $query) => $this->scopeToFolder($query, $folder));
-                }
-            })
+            ->where(fn (Builder $query) => FolderMedia::scopeToAny($query, $folders))
             ->where(function (Builder $query): void {
                 $query->where('file_name', 'like', '%' . $this->search . '%')
                     ->orWhere('name', 'like', '%' . $this->search . '%');
@@ -611,7 +571,7 @@ class MediaPicker extends Component implements HasActions, HasSchemas
 
         return $media->each(fn (Media $medium) => $medium->setAttribute(
             'picker_location',
-            $this->folderPath($folders->first(fn (Folder $folder): bool => $this->folderHolds($folder, $medium))),
+            $this->folderPath(FolderMedia::folderOf($medium, $folders)),
         ));
     }
 

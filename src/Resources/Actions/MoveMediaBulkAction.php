@@ -9,6 +9,7 @@ use Illuminate\Auth\Access\Response;
 use Illuminate\Database\Eloquent\Model;
 use TomatoPHP\FilamentMediaManager\Models\Folder;
 use TomatoPHP\FilamentMediaManager\Resources\MediaResource;
+use TomatoPHP\FilamentMediaManager\Resources\MediaResource\Pages\ListMedia;
 use TomatoPHP\FilamentMediaManager\Services\MediaMover;
 
 class MoveMediaBulkAction
@@ -19,7 +20,9 @@ class MoveMediaBulkAction
             ->label(trans('filament-media-manager::messages.media.actions.move.label'))
             ->icon('heroicon-o-folder-arrow-down')
             ->color('gray')
-            ->visible(fn (): bool => ($folder = static::currentFolder()) && MediaMover::canMoveFrom($folder))
+            // Not in a search, whose media are from several folders, not from the open one
+            ->visible(fn ($livewire): bool => ! ($livewire instanceof ListMedia && $livewire->searchesAllFolders())
+                && ($folder = static::currentFolder()) && MediaMover::canMoveFrom($folder))
             ->authorizeIndividualRecords(fn (Model $record): Response => MediaResource::getEditAuthorizationResponse($record))
             ->schema([
                 Select::make('folder')

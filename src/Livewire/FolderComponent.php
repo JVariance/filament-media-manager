@@ -21,16 +21,22 @@ class FolderComponent extends Component implements HasActions, HasSchemas
 
     public $item;
 
-    public function mount($item): void
+    /**
+     * The path of the folder it is in, shown in search results instead of its date
+     */
+    public ?string $location = null;
+
+    public function mount($item, ?string $location = null): void
     {
         $this->item = $item;
+        $this->location = $location;
     }
 
     public function getFolderAction(): Action
     {
         return Action::make('getFolderAction')
             ->color('danger')
-            ->view('filament-media-manager::components.folder-action-view', fn (array $arguments) => ['item' => $this->resolveFolder($arguments)])
+            ->view('filament-media-manager::components.folder-action-view', fn (array $arguments) => ['item' => $this->resolveFolder($arguments), 'location' => $this->location])
             ->requiresConfirmation(fn (array $arguments): bool => $this->needsPassword($this->resolveFolder($arguments)))
             ->schema(function (array $arguments) {
                 if (! $this->needsPassword($this->resolveFolder($arguments))) {

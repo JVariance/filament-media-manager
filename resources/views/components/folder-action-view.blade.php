@@ -171,9 +171,16 @@
                 }">
                 {{ $item->name }}
             </h1>
-            <p class="folder-date-{{$item->id}}">
-                {{ $item->created_at->diffForHumans() }}
-            </p>
+            {{-- In search results, the folder it is in --}}
+            @if(filled($location ?? null))
+                <p class="folder-date-{{$item->id}}" title="{{ $location }}">
+                    {{ $location }}
+                </p>
+            @else
+                <p class="folder-date-{{$item->id}}">
+                    {{ $item->created_at->diffForHumans() }}
+                </p>
+            @endif
         </div>
     </div>
 </button>

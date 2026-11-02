@@ -6,6 +6,7 @@ use Filament\Actions;
 use Filament\Resources\Pages\ManageRecords;
 use TomatoPHP\FilamentMediaManager\Models\Folder;
 use TomatoPHP\FilamentMediaManager\Resources\FolderResource;
+use TomatoPHP\FilamentMediaManager\Resources\MediaResource;
 use TomatoPHP\FilamentMediaManager\Services\FolderBreadcrumbs;
 use TomatoPHP\FilamentMediaManager\Services\FolderMover;
 
@@ -44,6 +45,21 @@ class ListFolders extends ManageRecords
 
         // The folders opened with their password stay open for the session (FolderLocks)
         session()->forget('folder_id');
+
+        // Back from the search results, the list shows the folders again instead of searching once more
+        $this->tableSearch = '';
+    }
+
+    /**
+     * The search looks in all folders and their media, on the media page, where their details and actions are
+     */
+    public function updatedTableSearch(): void
+    {
+        parent::updatedTableSearch();
+
+        if (filled($this->tableSearch)) {
+            $this->redirect(MediaResource::getUrl('index', ['search' => $this->tableSearch]), navigate: true);
+        }
     }
 
     /**
