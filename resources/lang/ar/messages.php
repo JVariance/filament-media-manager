@@ -93,5 +93,7 @@ return [
         'clear_all' => 'مسح الكل',
         'confirm_remove' => 'إزالة الوسائط',
         'confirm_remove_message' => 'هل أنت متأكد من إزالة هذا العنصر؟',
+        'missing' => 'لم يعد متاحًا',
+        'missing_description' => 'تم حذفه من مكتبة الوسائط',
     ],
 ];

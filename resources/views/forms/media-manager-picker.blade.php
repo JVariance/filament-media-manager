@@ -9,11 +9,10 @@
         // Without the folder of the media page in the session, which would hide media of other folders
         $media = \TomatoPHP\FilamentMediaManager\Models\Media::withoutGlobalScope('folder')->whereIn('uuid', $uuids)->get()->keyBy('uuid');
 
-        // Order media items according to state array order
+        // Order media items according to state array order. A medium deleted from the library since it was picked
+        // stays as null, so that it can be seen and removed, and the items keep the positions of the state for sorting
         foreach ($uuids as $uuid) {
-            if ($media->has($uuid)) {
-                $mediaItems[] = $media->get($uuid);
-            }
+            $mediaItems[$uuid] = $media->get($uuid);
         }
     }
 @endphp
@@ -240,8 +239,8 @@
         @if(!empty($mediaItems) && count($mediaItems) > 0)
             {{-- List Container --}}
             <div class="fi-picker-list-container" x-ref="mediaList">
-                @foreach($mediaItems as $media)
-                    <div class="fi-picker-list-item" data-uuid="{{ $media->uuid }}" wire:key="media-{{ $media->uuid }}">
+                @foreach($mediaItems as $uuid => $media)
+                    <div class="fi-picker-list-item" data-uuid="{{ $uuid }}" wire:key="media-{{ $uuid }}">
                         {{-- Drag Handle (only show if multiple) --}}
                         @if($isMultiple && count($mediaItems) > 1)
                             <div class="fi-picker-drag-handle" style="cursor: grab; padding: 0.5rem; margin-left: -0.5rem;">
@@ -254,7 +253,12 @@
 
                         {{-- Preview --}}
                         <div class="fi-picker-preview-thumb">
-                            @if(str_starts_with($media->mime_type, 'image/'))
+                            @if(! $media)
+                                <x-filament::icon
+                                    icon="heroicon-o-exclamation-triangle"
+                                    class="fi-picker-icon-danger"
+                                />
+                            @elseif(str_starts_with($media->mime_type, 'image/'))
                                 <img
                                     src="{{ $media->getUrl() }}"
                                     alt="{{ $media->name }}"
@@ -284,23 +288,32 @@
 
                         {{-- File Info --}}
                         <div class="fi-picker-file-info">
-                            <p class="fi-picker-file-name">
-                                {{ $media->name }}
-                            </p>
-                            <p class="fi-picker-file-filename">
-                                {{ $media->file_name }}
-                            </p>
-                            <p class="fi-picker-file-meta">
-                                {{ number_format($media->size / 1024, 2) }} KB
-                                @if($media->hasCustomProperty('description') && $media->getCustomProperty('description'))
-                                    <span style="margin: 0 0.25rem;">•</span>
-                                    {{ str($media->getCustomProperty('description'))->limit(50) }}
-                                @endif
-                            </p>
+                            @if(! $media)
+                                <p class="fi-picker-file-name">
+                                    {{ trans('filament-media-manager::messages.picker.missing') }}
+                                </p>
+                                <p class="fi-picker-file-filename">
+                                    {{ trans('filament-media-manager::messages.picker.missing_description') }}
+                                </p>
+                            @else
+                                <p class="fi-picker-file-name">
+                                    {{ $media->name }}
+                                </p>
+                                <p class="fi-picker-file-filename">
+                                    {{ $media->file_name }}
+                                </p>
+                                <p class="fi-picker-file-meta">
+                                    {{ number_format($media->size / 1024, 2) }} KB
+                                    @if($media->hasCustomProperty('description') && $media->getCustomProperty('description'))
+                                        <span style="margin: 0 0.25rem;">•</span>
+                                        {{ str($media->getCustomProperty('description'))->limit(50) }}
+                                    @endif
+                                </p>
+                            @endif
                         </div>
 
                         {{-- Remove Button --}}
-                        {{ $getAction('removeMediaItem')->arguments(['uuid' => $media->uuid]) }}
+                        {{ $getAction('removeMediaItem')->arguments(['uuid' => $uuid]) }}
                     </div>
                 @endforeach
             </div>
