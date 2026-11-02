@@ -178,6 +178,8 @@ class MediaManagerPicker extends Field
         return Action::make('removeMediaItem')
             ->label(trans('filament-media-manager::messages.picker.remove'))
             ->icon('heroicon-m-x-mark')
+            // On the tile, with the label as its tooltip
+            ->iconButton()
             ->color('danger')
             ->size('sm')
             ->requiresConfirmation()

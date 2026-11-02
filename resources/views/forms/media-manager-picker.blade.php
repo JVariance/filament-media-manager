@@ -19,58 +19,56 @@
 
 <x-dynamic-component :component="$getFieldWrapperView()" :field="$field">
     <style>
-        .fi-picker-list-container {
-            overflow: hidden;
+        /* Tiles in as many columns as fit, so that a gallery doesn't take a row per image */
+        .fi-picker-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+            gap: 0.75rem;
             border-radius: 0.5rem;
             border: 1px solid rgb(0 0 0 / 0.1);
             background-color: white;
             box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
             margin-top: 1rem;
-            padding: 0.5rem;
+            padding: 0.75rem;
         }
 
-        .fi-picker-list-container:where(.dark,.dark *) {
+        .fi-picker-grid:where(.dark,.dark *) {
             border-color: rgb(255 255 255 / 0.1);
             background-color: var(--gray-950);
         }
 
-        .fi-picker-list-item {
+        .fi-picker-grid-item {
+            position: relative;
             display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 0.75rem;
-            transition: background-color 0.15s;
-            border-radius: 0.375rem;
+            flex-direction: column;
+            min-width: 0;
+            overflow: hidden;
+            border-radius: 0.5rem;
+            border: 1px solid rgb(0 0 0 / 0.1);
+            background-color: white;
+            transition: box-shadow 0.15s;
         }
 
-        .fi-picker-list-item:not(:first-child) {
-            margin-top: 0.5rem;
+        .fi-picker-grid-item:where(.dark,.dark *) {
+            border-color: rgb(255 255 255 / 0.1);
+            background-color: var(--gray-900);
         }
 
-        .fi-picker-list-item:hover {
-            background-color: rgb(249 250 251);
-        }
-
-        .fi-picker-list-item:where(.dark,.dark *):hover {
-            background-color: rgb(255 255 255 / 0.05);
+        .fi-picker-grid-item:hover {
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         }
 
         .fi-picker-preview-thumb {
             display: flex;
-            width: 3.5rem;
-            height: 3.5rem;
-            flex-shrink: 0;
+            aspect-ratio: 1;
+            width: 100%;
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            border-radius: 0.5rem;
-            border: 1px solid rgb(0 0 0 / 0.1);
             background-color: rgb(249 250 251);
-            padding: 0.25rem;
         }
 
         .fi-picker-preview-thumb:where(.dark,.dark *) {
-            border-color: rgb(255 255 255 / 0.1);
             background-color: var(--gray-800);
         }
 
@@ -78,12 +76,15 @@
             height: 100%;
             width: 100%;
             object-fit: cover;
-            border-radius: 0.25rem;
+        }
+
+        .fi-picker-drag-handle {
+            cursor: grab;
         }
 
         .fi-picker-icon {
-            height: 1.75rem;
-            width: 1.75rem;
+            height: 2.5rem;
+            width: 2.5rem;
             color: rgb(107 114 128);
         }
 
@@ -92,21 +93,21 @@
         }
 
         .fi-picker-icon-danger {
-            height: 1.75rem;
-            width: 1.75rem;
+            height: 2.5rem;
+            width: 2.5rem;
             color: rgb(239 68 68);
         }
 
         .fi-picker-file-info {
             min-width: 0;
-            flex: 1;
+            padding: 0.5rem;
         }
 
         .fi-picker-file-name {
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            font-size: 0.875rem;
+            font-size: 0.75rem;
             font-weight: 600;
             color: rgb(17 24 39);
         }
@@ -115,7 +116,7 @@
             color: white;
         }
 
-        .fi-picker-file-filename {
+        .fi-picker-file-meta {
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -123,18 +124,22 @@
             color: rgb(107 114 128);
         }
 
-        .fi-picker-file-filename:where(.dark,.dark *) {
-            color: rgb(156 163 175);
-        }
-
-        .fi-picker-file-meta {
-            margin-top: 0.125rem;
-            font-size: 0.75rem;
-            color: rgb(107 114 128);
-        }
-
         .fi-picker-file-meta:where(.dark,.dark *) {
             color: rgb(156 163 175);
+        }
+
+        /* On the image, with a background so that it stands out on light and dark images alike */
+        .fi-picker-remove {
+            position: absolute;
+            top: 0.25rem;
+            inset-inline-end: 0.25rem;
+            border-radius: 9999px;
+            background-color: rgb(255 255 255 / 0.9);
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.15);
+        }
+
+        .fi-picker-remove:where(.dark,.dark *) {
+            background-color: rgb(17 24 39 / 0.85);
         }
 
         .fi-picker-empty-state-container {
@@ -176,7 +181,7 @@
                 if (!container || !window.Sortable) return;
 
                 // Only init if we have items
-                const items = container.querySelectorAll('.fi-picker-list-item');
+                const items = container.querySelectorAll('.fi-picker-grid-item');
                 if (items.length <= 1) return;
 
                 this.sortableInstance = window.Sortable.create(container, {
@@ -237,22 +242,14 @@
     >
         {{-- Preview Section --}}
         @if(!empty($mediaItems) && count($mediaItems) > 0)
-            {{-- List Container --}}
-            <div class="fi-picker-list-container" x-ref="mediaList">
+            <div class="fi-picker-grid" x-ref="mediaList">
                 @foreach($mediaItems as $uuid => $media)
-                    <div class="fi-picker-list-item" data-uuid="{{ $uuid }}" wire:key="media-{{ $uuid }}">
-                        {{-- Drag Handle (only show if multiple) --}}
-                        @if($isMultiple && count($mediaItems) > 1)
-                            <div class="fi-picker-drag-handle" style="cursor: grab; padding: 0.5rem; margin-left: -0.5rem;">
-                                <x-filament::icon
-                                    icon="heroicon-o-bars-3"
-                                    class="h-5 w-5 text-gray-400 dark:text-gray-500"
-                                />
-                            </div>
-                        @endif
-
-                        {{-- Preview --}}
-                        <div class="fi-picker-preview-thumb">
+                    <div class="fi-picker-grid-item" data-uuid="{{ $uuid }}" wire:key="media-{{ $uuid }}">
+                        {{-- Preview, by which the tile is dragged when there are several --}}
+                        <div @class([
+                            'fi-picker-preview-thumb',
+                            'fi-picker-drag-handle' => $isMultiple && count($mediaItems) > 1,
+                        ])>
                             @if(! $media)
                                 <x-filament::icon
                                     icon="heroicon-o-exclamation-triangle"
@@ -262,6 +259,8 @@
                                 <img
                                     src="{{ $media->getUrl() }}"
                                     alt="{{ $media->name }}"
+                                    loading="lazy"
+                                    draggable="false"
                                 />
                             @elseif(str($media->mime_type)->contains('video'))
                                 <x-filament::icon
@@ -286,34 +285,29 @@
                             @endif
                         </div>
 
-                        {{-- File Info --}}
+                        {{-- File Info, in full in the titles --}}
                         <div class="fi-picker-file-info">
                             @if(! $media)
                                 <p class="fi-picker-file-name">
                                     {{ trans('filament-media-manager::messages.picker.missing') }}
                                 </p>
-                                <p class="fi-picker-file-filename">
+                                <p class="fi-picker-file-meta">
                                     {{ trans('filament-media-manager::messages.picker.missing_description') }}
                                 </p>
                             @else
-                                <p class="fi-picker-file-name">
+                                <p class="fi-picker-file-name" title="{{ $media->file_name }}">
                                     {{ $media->name }}
                                 </p>
-                                <p class="fi-picker-file-filename">
-                                    {{ $media->file_name }}
-                                </p>
-                                <p class="fi-picker-file-meta">
+                                <p class="fi-picker-file-meta" title="{{ $media->getCustomProperty('description') }}">
                                     {{ number_format($media->size / 1024, 2) }} KB
-                                    @if($media->hasCustomProperty('description') && $media->getCustomProperty('description'))
-                                        <span style="margin: 0 0.25rem;">•</span>
-                                        {{ str($media->getCustomProperty('description'))->limit(50) }}
-                                    @endif
                                 </p>
                             @endif
                         </div>
 
                         {{-- Remove Button --}}
-                        {{ $getAction('removeMediaItem')->arguments(['uuid' => $uuid]) }}
+                        <div class="fi-picker-remove">
+                            {{ $getAction('removeMediaItem')->arguments(['uuid' => $uuid]) }}
+                        </div>
                     </div>
                 @endforeach
             </div>
