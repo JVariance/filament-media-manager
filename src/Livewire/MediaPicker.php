@@ -438,7 +438,8 @@ class MediaPicker extends Component implements HasActions, HasSchemas
 
     /**
      * The folders of all levels whose name matches the search. A protected folder that is still locked shows, so
-     * that it can be opened with its password, but none of the folders below it.
+     * that it can be opened with its password, but none of the folders below it. Each knows the path of the folder
+     * it is in (picker_location), if any.
      */
     protected function searchFolders(): Collection
     {
@@ -448,12 +449,13 @@ class MediaPicker extends Component implements HasActions, HasSchemas
             ->filter(fn (Folder $folder): bool => Str::contains($folder->name, $this->search, ignoreCase: true))
             ->filter(fn (Folder $folder): bool => ! ($parent = $this->parentOf($folder)) || $this->isOpen($parent))
             ->when($this->collectionName, fn (Collection $folders) => $folders->where('collection', $this->collectionName))
+            ->each(fn (Folder $folder) => $folder->setAttribute('picker_location', $this->folderPath($this->parentOf($folder))))
             ->values();
     }
 
     /**
      * The media of all folders whose name or file name matches the search, except the media of protected folders
-     * that are still locked and of the folders below them. Each knows its folder (pickerFolder) for the results.
+     * that are still locked and of the folders below them. Each knows the path of its folder (picker_location).
      */
     protected function searchMedia(): Collection
     {
@@ -477,10 +479,28 @@ class MediaPicker extends Component implements HasActions, HasSchemas
             })
             ->get();
 
-        return $media->each(fn (Media $medium) => $medium->setRelation(
-            'pickerFolder',
-            $folders->first(fn (Folder $folder): bool => $this->folderHolds($folder, $medium)),
+        return $media->each(fn (Media $medium) => $medium->setAttribute(
+            'picker_location',
+            $this->folderPath($folders->first(fn (Folder $folder): bool => $this->folderHolds($folder, $medium))),
         ));
+    }
+
+    /**
+     * The names of the folder and the folders above it, e.g. "Floor plans › Water tower", so that folders of the
+     * same name can be told apart in the search results
+     */
+    protected function folderPath(?Folder $folder): ?string
+    {
+        $names = [];
+        $visited = [];
+
+        while ($folder && ! in_array($folder->id, $visited, true)) {
+            $visited[] = $folder->id;
+            array_unshift($names, $folder->name);
+            $folder = $this->parentOf($folder);
+        }
+
+        return $names ? implode(' › ', $names) : null;
     }
 
     /**
