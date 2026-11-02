@@ -59,17 +59,18 @@ it('still goes back from a record folder to its collection and model type folder
         ->assertSet('currentFolderId', $typeFolder->id);
 });
 
-it('asks for the password when going back into a protected parent', function () {
+it('goes back into a protected parent, which was opened with its password on the way in, without asking again', function () {
     $parent = Folder::factory()->protected('top-secret-123')->create(['collection' => 'private']);
     $child = pickerSubFolder($parent, 'public');
 
+    // A sub folder of a protected folder is only reached through its password (fix/picker-protected-folder-bypass)
     Livewire::test(MediaPicker::class, ['pickerKey' => 'picker'])
-        ->set('currentFolderId', $child->id)
-        ->call('goBack')
-        ->assertSet('currentFolderId', $child->id)
-        ->assertSet('pendingFolderId', $parent->id)
-        ->assertActionMounted('verifyPassword')
+        ->call('openFolder', $parent->id)
         ->setActionData(['password' => 'top-secret-123'])
         ->callMountedAction()
+        ->call('openFolder', $child->id)
+        ->assertSet('currentFolderId', $child->id)
+        ->call('goBack')
+        ->assertActionNotMounted('verifyPassword')
         ->assertSet('currentFolderId', $parent->id);
 });

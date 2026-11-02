@@ -110,6 +110,29 @@ class MediaPicker extends Component implements HasActions, HasSchemas
         $this->search = '';
     }
 
+    /**
+     * The open folder is a public property, which the browser can set (the first breadcrumb sets it to null). A
+     * protected folder that is still locked, or a folder below it, must not open that way, without its password.
+     */
+    public function updatedCurrentFolderId(): void
+    {
+        if (! $this->currentFolderIsOpen()) {
+            $this->currentFolderId = null;
+        }
+    }
+
+    protected function currentFolderIsOpen(): bool
+    {
+        if (! $this->currentFolderId) {
+            return true;
+        }
+
+        // Fresh, as a folder created in this request is not among allFolders() yet
+        $folder = Folder::withoutGlobalScope('user')->find($this->currentFolderId);
+
+        return $folder && $this->isOpen($folder);
+    }
+
     public function verifyPassword(): Action
     {
         return Action::make('verifyPassword')
