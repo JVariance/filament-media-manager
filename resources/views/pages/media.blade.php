@@ -444,7 +444,7 @@
 @if($searching)
     <style>
         .media-search-heading {
-            margin-bottom: 1rem;
+            padding: 1rem 1.5rem 0;
             font-size: 0.875rem;
             font-weight: 600;
             color: rgb(55 65 81);
@@ -455,9 +455,10 @@
         }
     </style>
 
-    <p class="media-search-heading">{{ trans('filament-media-manager::messages.picker.search_results') }}</p>
-
-    @if(! $this->folder)
+    {{-- Inside a folder, whose name is the title; without one, the title says it --}}
+    @if($this->folder)
+        <p class="media-search-heading">{{ trans('filament-media-manager::messages.picker.search_results') }}</p>
+    @else
         {{-- Coming from the search of the folders list, typing goes on here --}}
         <div x-data x-init="$nextTick(() => {
             const input = document.querySelector('.fi-ta-search-field input')
