@@ -12,6 +12,7 @@ use TomatoPHP\FilamentMediaManager\Models\Media;
 use TomatoPHP\FilamentMediaManager\Resources\FolderResource;
 use TomatoPHP\FilamentMediaManager\Resources\MediaResource;
 use TomatoPHP\FilamentMediaManager\Resources\MediaResource\Pages\ListMedia;
+use TomatoPHP\FilamentMediaManager\Services\FolderLocks;
 use TomatoPHP\FilamentMediaManager\Services\MediaMover;
 use TomatoPHP\FilamentMediaManager\Tests\Models\Product;
 use TomatoPHP\FilamentMediaManager\Tests\Models\User;
@@ -240,7 +241,7 @@ it('moves nothing to a protected folder that is not unlocked', function () {
     expect($media->refresh()->collection_name)->toBe($from->collection);
 
     // The password of another folder does not unlock it
-    session()->put('folder_password', 'other');
+    FolderLocks::unlockInSession($other);
 
     expect(MediaMover::targets($from)->pluck('id'))->toContain($other->id)->not->toContain($locked->id);
 });
@@ -250,7 +251,7 @@ it('moves media to a protected folder unlocked in the session', function () {
     $locked = Folder::factory()->create(['is_protected' => true, 'password' => 'secret']);
     $media = uploadTo($from, 'photo');
 
-    session()->put('folder_password', 'secret');
+    FolderLocks::unlockInSession($locked);
 
     gallery($from)
         ->selectTableRecords([$media->getKey()])

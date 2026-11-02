@@ -25,7 +25,9 @@ use TomatoPHP\FilamentMediaManager\Resources\Actions\MoveFolderAction;
 use TomatoPHP\FilamentMediaManager\Resources\FolderResource;
 use TomatoPHP\FilamentMediaManager\Resources\MediaResource;
 use TomatoPHP\FilamentMediaManager\Services\FocalPoint;
+use TomatoPHP\FilamentMediaManager\Services\FolderAccess;
 use TomatoPHP\FilamentMediaManager\Services\FolderBreadcrumbs;
+use TomatoPHP\FilamentMediaManager\Services\FolderLocks;
 use TomatoPHP\FilamentMediaManager\Services\FolderMover;
 use TomatoPHP\FilamentMediaManager\Services\ImageEditor;
 use TomatoPHP\FilamentMediaManager\Services\MediaDownload;
@@ -79,7 +81,8 @@ class ListMedia extends ManageRecords
         if (! $folder) {
             abort(404, 'Folder ID is required');
         } else {
-            if ($folder->is_protected && ! session()->has('folder_password')) {
+            // A protected folder, or a folder below one, that was not opened with its password in this session
+            if (! FolderLocks::isOpen($folder)) {
                 abort(403, 'You Cannot Access This Folder');
             }
         }
@@ -143,16 +146,19 @@ class ListMedia extends ManageRecords
             })
             ->action(function (array $arguments, array $data) {
                 if ($arguments['record']['is_protected']) {
-                    if ($arguments['record']['password'] != $data['password']) {
+                    // Against the stored password, not one sent by the browser with the record
+                    $folder = Folder::query()->find($arguments['record']['id'] ?? null);
+
+                    if (! $folder || ! FolderAccess::passwordMatches($folder, $data['password'] ?? null)) {
                         Notification::make()
                             ->title('Password is incorrect')
                             ->danger()
                             ->send();
 
                         return;
-                    } else {
-                        session()->put('folder_password', $data['password']);
                     }
+
+                    FolderLocks::unlockInSession($folder);
                 }
                 if (! $arguments['record']['model_type']) {
                     if (filament()->getTenant()) {

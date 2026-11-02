@@ -11,6 +11,8 @@ use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Illuminate\Database\Eloquent\Model;
 use Livewire\Component;
+use TomatoPHP\FilamentMediaManager\Services\FolderAccess;
+use TomatoPHP\FilamentMediaManager\Services\FolderLocks;
 
 class FolderComponent extends Component implements HasActions, HasSchemas
 {
@@ -29,9 +31,9 @@ class FolderComponent extends Component implements HasActions, HasSchemas
         return Action::make('getFolderAction')
             ->color('danger')
             ->view('filament-media-manager::components.folder-action-view', fn (array $arguments) => ['item' => $this->resolveFolder($arguments)])
-            ->requiresConfirmation(fn (array $arguments): bool => (bool) $this->resolveFolder($arguments)?->is_protected)
+            ->requiresConfirmation(fn (array $arguments): bool => $this->needsPassword($this->resolveFolder($arguments)))
             ->schema(function (array $arguments) {
-                if (! $this->resolveFolder($arguments)?->is_protected) {
+                if (! $this->needsPassword($this->resolveFolder($arguments))) {
                     return null;
                 }
 
@@ -50,9 +52,9 @@ class FolderComponent extends Component implements HasActions, HasSchemas
                     return;
                 }
 
-                if ($folder->is_protected) {
+                if ($this->needsPassword($folder)) {
                     // Check against the stored password, never against a value sent by the browser.
-                    if (! hash_equals((string) $folder->password, (string) ($data['password'] ?? ''))) {
+                    if (! FolderAccess::passwordMatches($folder, $data['password'] ?? null)) {
                         Notification::make()
                             ->title('Password is incorrect')
                             ->danger()
@@ -61,7 +63,8 @@ class FolderComponent extends Component implements HasActions, HasSchemas
                         return;
                     }
 
-                    session()->put('folder_password', $data['password']);
+                    // This folder only, for the session; the other protected folders keep their passwords
+                    FolderLocks::unlockInSession($folder);
                 }
 
                 if (! $folder->model_type) {
@@ -96,6 +99,14 @@ class FolderComponent extends Component implements HasActions, HasSchemas
     /**
      * Load the folder from the database; the browser only sends its id.
      */
+    /**
+     * A protected folder asks for its password until it was opened with it in this session
+     */
+    protected function needsPassword(?Model $folder): bool
+    {
+        return $folder && $folder->is_protected && ! in_array((int) $folder->getKey(), FolderLocks::unlockedInSession(), true);
+    }
+
     protected function resolveFolder(array $arguments): ?Model
     {
         $item = $arguments['item'] ?? null;

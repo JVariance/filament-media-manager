@@ -22,6 +22,7 @@ use TomatoPHP\FilamentMediaManager\Models\Media;
 use TomatoPHP\FilamentMediaManager\Resources\Actions\EditCurrentFolderAction;
 use TomatoPHP\FilamentMediaManager\Resources\Schemas\FolderForm;
 use TomatoPHP\FilamentMediaManager\Services\FolderBreadcrumbs;
+use TomatoPHP\FilamentMediaManager\Services\FolderLocks;
 use TomatoPHP\FilamentMediaManager\Services\WebSafeFileName;
 
 class MediaPicker extends Component implements HasActions, HasSchemas
@@ -615,21 +616,11 @@ class MediaPicker extends Component implements HasActions, HasSchemas
     }
 
     /**
-     * The names of the folder and the folders above it, e.g. "Floor plans › Water tower", so that folders of the
-     * same name can be told apart in the search results
+     * The path of the folder in the search results, e.g. "Floor plans › Water tower"
      */
     protected function folderPath(?Folder $folder): ?string
     {
-        $names = [];
-        $visited = [];
-
-        while ($folder && ! in_array($folder->id, $visited, true)) {
-            $visited[] = $folder->id;
-            array_unshift($names, $folder->name);
-            $folder = $this->parentOf($folder);
-        }
-
-        return $names ? implode(' › ', $names) : null;
+        return FolderLocks::path($folder, $this->allFolders());
     }
 
     /**
@@ -637,45 +628,12 @@ class MediaPicker extends Component implements HasActions, HasSchemas
      */
     protected function isOpen(Folder $folder): bool
     {
-        $visited = [];
-
-        while ($folder && ! in_array($folder->id, $visited, true)) {
-            if ($folder->is_protected && ! in_array($folder->id, $this->unlockedFolderIds, true)) {
-                return false;
-            }
-
-            $visited[] = $folder->id;
-            $folder = $this->parentOf($folder);
-        }
-
-        return true;
+        return FolderLocks::isOpen($folder, $this->unlockedFolderIds, $this->allFolders());
     }
 
-    /**
-     * The folder that the picker shows the folder in: the parent of a sub folder, the collection folder of a record
-     * folder, the model type folder of a collection folder
-     */
     protected function parentOf(Folder $folder): ?Folder
     {
-        $folders = $this->allFolders();
-
-        if ($folder->model_type === Folder::class) {
-            return $folders->get($folder->model_id);
-        }
-
-        if ($folder->model_type && $folder->model_id) {
-            return $folders->first(fn (Folder $parent): bool => $parent->model_type === $folder->model_type
-                && ! $parent->model_id
-                && $parent->collection === $folder->collection);
-        }
-
-        if ($folder->model_type && $folder->collection) {
-            return $folders->first(fn (Folder $parent): bool => $parent->model_type === $folder->model_type
-                && ! $parent->model_id
-                && ! $parent->collection);
-        }
-
-        return null;
+        return FolderLocks::parentOf($folder, $this->allFolders());
     }
 
     /**
@@ -683,8 +641,7 @@ class MediaPicker extends Component implements HasActions, HasSchemas
      */
     protected function allFolders(): Collection
     {
-        // Like the folder levels, without the user access global scope
-        return $this->allFolders ??= Folder::withoutGlobalScope('user')->get()->keyBy('id');
+        return $this->allFolders ??= FolderLocks::folders();
     }
 
     public function getCurrentFolderProperty(): ?Folder

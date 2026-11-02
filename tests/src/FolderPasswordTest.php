@@ -7,6 +7,7 @@ use TomatoPHP\FilamentMediaManager\Livewire\FolderComponent;
 use TomatoPHP\FilamentMediaManager\Models\Folder;
 use TomatoPHP\FilamentMediaManager\Resources\FolderResource;
 use TomatoPHP\FilamentMediaManager\Resources\MediaResource;
+use TomatoPHP\FilamentMediaManager\Services\FolderLocks;
 use TomatoPHP\FilamentMediaManager\Tests\Models\User;
 
 use function Pest\Laravel\actingAs;
@@ -45,7 +46,7 @@ it('rejects a password check whose arguments were tampered with', function () {
         ->assertNotified('Password is incorrect')
         ->assertNoRedirect();
 
-    expect(session()->has('folder_password'))->toBeFalse();
+    expect(FolderLocks::unlockedInSession())->toBe([]);
 });
 
 it('opens a protected folder with the right password', function () {

@@ -59,12 +59,13 @@ class MediaMover
             ->where('collection', '!=', '')
             ->orderBy('name');
 
-        // A protected folder only once it is unlocked: the password given in this session must be its own
-        $locked = Folder::query()
-            ->where('is_protected', true)
-            ->get()
-            ->reject(fn (Folder $folder): bool => FolderAccess::passwordMatches($folder, session('folder_password')))
-            ->modelKeys();
+        // A protected folder only once it was opened with its password in this session, and the folders below it
+        // only then too
+        $folders = FolderLocks::folders();
+        $locked = $folders
+            ->reject(fn (Folder $folder): bool => FolderLocks::isOpen($folder, folders: $folders))
+            ->keys()
+            ->all();
 
         $query->whereKeyNot($locked);
 

@@ -42,8 +42,8 @@ class ListFolders extends ManageRecords
     {
         parent::mount();
 
+        // The folders opened with their password stay open for the session (FolderLocks)
         session()->forget('folder_id');
-        session()->forget('folder_password');
     }
 
     /**
