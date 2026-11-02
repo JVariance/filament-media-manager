@@ -159,5 +159,7 @@ return [
         'confirm_remove_message' => 'هل أنت متأكد من إزالة هذا العنصر؟',
         'create_folder' => 'مجلد جديد',
         'folder_created' => 'تم إنشاء المجلد',
+        'missing' => 'لم يعد متاحًا',
+        'missing_description' => 'تم حذفه من مكتبة الوسائط',
     ],
 ];

@@ -163,5 +163,7 @@ return [
         'confirm_remove_message' => 'Are you sure you want to remove this media item?',
         'create_folder' => 'New Folder',
         'folder_created' => 'Folder created',
+        'missing' => 'No longer available',
+        'missing_description' => 'Deleted from the media library',
     ],
 ];

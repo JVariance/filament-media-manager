@@ -636,8 +636,12 @@
     @if($isMultiple && count($selectedMedia) > 0)
         @php
             // Ensure $selectedMedia is a flat array of UUIDs
-            $uuids = collect($selectedMedia)->flatten()->filter()->unique()->toArray();
-            $selectedMediaItems = \TomatoPHP\FilamentMediaManager\Models\Media::withoutGlobalScope('folder')->whereIn('uuid', $uuids)->get();
+            $uuids = collect($selectedMedia)->flatten()->filter()->unique()->values();
+            $foundMedia = \TomatoPHP\FilamentMediaManager\Models\Media::withoutGlobalScope('folder')->whereIn('uuid', $uuids)->get()->keyBy('uuid');
+
+            // In the order of the selection; a medium deleted from the library since it was picked stays as null,
+            // so that it can be seen and removed instead of being counted without showing up
+            $selectedMediaItems = $uuids->mapWithKeys(fn ($uuid): array => [$uuid => $foundMedia->get($uuid)]);
         @endphp
         <style>
             .fi-selected-preview-section {
@@ -813,11 +817,16 @@
 
             {{-- List Container --}}
             <div class="fi-selected-list-container">
-                @foreach($selectedMediaItems as $mediaItem)
-                    <div class="fi-selected-list-item">
+                @foreach($selectedMediaItems as $uuid => $mediaItem)
+                    <div class="fi-selected-list-item" wire:key="selected-{{ $uuid }}">
                         {{-- Preview --}}
                         <div class="fi-selected-preview-thumb">
-                            @if(str($mediaItem->mime_type)->contains('image'))
+                            @if(! $mediaItem)
+                                <x-filament::icon
+                                    icon="heroicon-o-exclamation-triangle"
+                                    class="fi-selected-icon-danger"
+                                />
+                            @elseif(str($mediaItem->mime_type)->contains('image'))
                                 <img
                                     src="{{ $mediaItem->getUrl() }}"
                                     alt="{{ $mediaItem->file_name }}"
@@ -847,19 +856,28 @@
 
                         {{-- File Info --}}
                         <div class="fi-selected-file-info">
-                            <p class="fi-selected-file-name">
-                                {{ $mediaItem->name }}
-                            </p>
-                            <p class="fi-selected-file-filename">
-                                {{ $mediaItem->file_name }}
-                            </p>
-                            <p class="fi-selected-file-meta">
-                                {{ number_format($mediaItem->size / 1024, 2) }} KB
-                                @if($mediaItem->hasCustomProperty('description') && $mediaItem->getCustomProperty('description'))
-                                    <span style="margin: 0 0.25rem;">•</span>
-                                    {{ str($mediaItem->getCustomProperty('description'))->limit(50) }}
-                                @endif
-                            </p>
+                            @if(! $mediaItem)
+                                <p class="fi-selected-file-name">
+                                    {{ trans('filament-media-manager::messages.picker.missing') }}
+                                </p>
+                                <p class="fi-selected-file-filename">
+                                    {{ trans('filament-media-manager::messages.picker.missing_description') }}
+                                </p>
+                            @else
+                                <p class="fi-selected-file-name">
+                                    {{ $mediaItem->name }}
+                                </p>
+                                <p class="fi-selected-file-filename">
+                                    {{ $mediaItem->file_name }}
+                                </p>
+                                <p class="fi-selected-file-meta">
+                                    {{ number_format($mediaItem->size / 1024, 2) }} KB
+                                    @if($mediaItem->hasCustomProperty('description') && $mediaItem->getCustomProperty('description'))
+                                        <span style="margin: 0 0.25rem;">•</span>
+                                        {{ str($mediaItem->getCustomProperty('description'))->limit(50) }}
+                                    @endif
+                                </p>
+                            @endif
                         </div>
 
                         {{-- Remove Button --}}
@@ -867,7 +885,7 @@
                             icon="heroicon-m-x-mark"
                             color="danger"
                             size="sm"
-                            wire:click="removeSelection('{{ $mediaItem->uuid }}')"
+                            wire:click="removeSelection('{{ $uuid }}')"
                             :label="trans('filament-media-manager::messages.picker.remove')"
                         />
                     </div>
