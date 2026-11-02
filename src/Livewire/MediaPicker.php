@@ -10,6 +10,10 @@ use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use TomatoPHP\FilamentMediaManager\Models\Folder;
@@ -33,6 +37,22 @@ class MediaPicker extends Component implements HasActions, HasSchemas
     public string $search = '';
 
     public ?int $pendingFolderId = null;
+
+    /**
+     * Protected folders opened with their password in this picker, whose media the search may show. Locked, so that
+     * the browser can't add any.
+     *
+     * @var list<int>
+     */
+    #[Locked]
+    public array $unlockedFolderIds = [];
+
+    /**
+     * All folders, for the search, once per request
+     *
+     * @var Collection<int, Folder>|null
+     */
+    protected ?Collection $allFolders = null;
 
     public ?int $maxItems = null;
 
@@ -70,8 +90,8 @@ class MediaPicker extends Component implements HasActions, HasSchemas
             return;
         }
 
-        // Check if folder is protected
-        if ($folder->is_protected) {
+        // Check if folder is protected; once opened with its password, it opens without it in this picker
+        if ($folder->is_protected && ! in_array($folder->id, $this->unlockedFolderIds, true)) {
             $this->pendingFolderId = $folderId;
             $this->mountAction('verifyPassword', ['folder' => $folder]);
 
@@ -80,6 +100,9 @@ class MediaPicker extends Component implements HasActions, HasSchemas
 
         // Don't reset selections when navigating
         $this->currentFolderId = $folderId;
+
+        // Opened from the search results, the folder shows its contents
+        $this->search = '';
     }
 
     public function verifyPassword(): Action
@@ -113,7 +136,9 @@ class MediaPicker extends Component implements HasActions, HasSchemas
 
                 // Password correct, open folder
                 $this->currentFolderId = $this->pendingFolderId;
+                $this->unlockedFolderIds[] = $this->pendingFolderId;
                 $this->pendingFolderId = null;
+                $this->search = '';
 
                 Notification::make()
                     ->title(__('Access granted'))
@@ -305,6 +330,10 @@ class MediaPicker extends Component implements HasActions, HasSchemas
 
     public function getFoldersProperty()
     {
+        if (filled($this->search)) {
+            return $this->searchFolders();
+        }
+
         // Remove user access global scope to show all folders
         $query = Folder::withoutGlobalScope('user');
 
@@ -343,70 +372,170 @@ class MediaPicker extends Component implements HasActions, HasSchemas
             $query->where('collection', $this->collectionName);
         }
 
-        // Apply search filter
-        if (filled($this->search)) {
-            $query->where('name', 'like', '%' . $this->search . '%');
-        }
-
         return $query->get();
     }
 
     public function getMediaProperty()
     {
+        if (filled($this->search)) {
+            return $this->searchMedia();
+        }
+
         // No media at root level or model type level
         if (! $this->currentFolderId) {
-            if (filled($this->search) && $this->collectionName) {
-                $query = Media::withoutGlobalScope('folder')
-                    ->where('collection_name', $this->collectionName)
-                    ->where(function ($q) {
-                        $q->where('file_name', 'like', '%' . $this->search . '%')
-                            ->orWhere('name', 'like', '%' . $this->search . '%');
-                    });
-
-                return $query->get();
-            }
-
             return collect();
         }
 
         $folder = Folder::find($this->currentFolderId);
 
-        if (! $folder) {
+        // If no collection, don't show any media
+        if (! $folder?->collection) {
             return collect();
         }
 
         // Remove the global scope temporarily to get media
         $query = Media::withoutGlobalScope('folder');
+        $this->scopeToFolder($query, $folder);
 
-        // Filter media based on folder structure (same logic as Media model's global scope)
-        if ($folder->collection) {
-            if ($folder->model_type && $folder->model_id) {
-                // Instance folder - show only media belonging to this specific model instance
-                $query->where('model_type', $folder->model_type)
-                    ->where('model_id', $folder->model_id)
-                    ->where('collection_name', $folder->collection);
-            } elseif ($folder->model_type && ! $folder->model_id) {
-                // Collection folder - show media without model_id (not belonging to specific instances)
-                $query->where('collection_name', $folder->collection)
-                    ->whereNull('model_id');
-            } else {
-                // Regular folder - show all media in collection
-                $query->where('collection_name', $folder->collection);
-            }
+        return $query->get();
+    }
+
+    /**
+     * Filter media based on folder structure (same logic as Media model's global scope)
+     */
+    protected function scopeToFolder(Builder $query, Folder $folder): void
+    {
+        if ($folder->model_type && $folder->model_id) {
+            // Instance folder - show only media belonging to this specific model instance
+            $query->where('model_type', $folder->model_type)
+                ->where('model_id', $folder->model_id)
+                ->where('collection_name', $folder->collection);
+        } elseif ($folder->model_type && ! $folder->model_id) {
+            // Collection folder - show media without model_id (not belonging to specific instances)
+            $query->where('collection_name', $folder->collection)
+                ->whereNull('model_id');
         } else {
-            // If no collection, don't show any media
+            // Regular folder - show all media in collection
+            $query->where('collection_name', $folder->collection);
+        }
+    }
+
+    /**
+     * Whether a medium is in the folder, like scopeToFolder() decides it
+     */
+    protected function folderHolds(Folder $folder, Media $medium): bool
+    {
+        if ($folder->collection !== $medium->collection_name) {
+            return false;
+        }
+
+        if ($folder->model_type && $folder->model_id) {
+            return $medium->model_type === $folder->model_type && (string) $medium->model_id === (string) $folder->model_id;
+        }
+
+        return ! $folder->model_type || $medium->model_id === null;
+    }
+
+    /**
+     * The folders of all levels whose name matches the search. A protected folder that is still locked shows, so
+     * that it can be opened with its password, but none of the folders below it.
+     */
+    protected function searchFolders(): Collection
+    {
+        $folders = $this->allFolders();
+
+        return $folders
+            ->filter(fn (Folder $folder): bool => Str::contains($folder->name, $this->search, ignoreCase: true))
+            ->filter(fn (Folder $folder): bool => ! ($parent = $this->parentOf($folder)) || $this->isOpen($parent))
+            ->when($this->collectionName, fn (Collection $folders) => $folders->where('collection', $this->collectionName))
+            ->values();
+    }
+
+    /**
+     * The media of all folders whose name or file name matches the search, except the media of protected folders
+     * that are still locked and of the folders below them. Each knows its folder (pickerFolder) for the results.
+     */
+    protected function searchMedia(): Collection
+    {
+        $folders = $this->allFolders()
+            ->filter(fn (Folder $folder): bool => filled($folder->collection) && $this->isOpen($folder))
+            ->when($this->collectionName, fn (Collection $folders) => $folders->where('collection', $this->collectionName));
+
+        if ($folders->isEmpty()) {
             return collect();
         }
 
-        // Apply search filter
-        if (filled($this->search)) {
-            $query->where(function ($q) {
-                $q->where('file_name', 'like', '%' . $this->search . '%')
+        $media = Media::withoutGlobalScope('folder')
+            ->where(function (Builder $query) use ($folders): void {
+                foreach ($folders as $folder) {
+                    $query->orWhere(fn (Builder $query) => $this->scopeToFolder($query, $folder));
+                }
+            })
+            ->where(function (Builder $query): void {
+                $query->where('file_name', 'like', '%' . $this->search . '%')
                     ->orWhere('name', 'like', '%' . $this->search . '%');
-            });
+            })
+            ->get();
+
+        return $media->each(fn (Media $medium) => $medium->setRelation(
+            'pickerFolder',
+            $folders->first(fn (Folder $folder): bool => $this->folderHolds($folder, $medium)),
+        ));
+    }
+
+    /**
+     * Whether the folder and all folders above it are unprotected or opened with their password in this picker
+     */
+    protected function isOpen(Folder $folder): bool
+    {
+        $visited = [];
+
+        while ($folder && ! in_array($folder->id, $visited, true)) {
+            if ($folder->is_protected && ! in_array($folder->id, $this->unlockedFolderIds, true)) {
+                return false;
+            }
+
+            $visited[] = $folder->id;
+            $folder = $this->parentOf($folder);
         }
 
-        return $query->get();
+        return true;
+    }
+
+    /**
+     * The folder that the picker shows the folder in: the parent of a sub folder, the collection folder of a record
+     * folder, the model type folder of a collection folder
+     */
+    protected function parentOf(Folder $folder): ?Folder
+    {
+        $folders = $this->allFolders();
+
+        if ($folder->model_type === Folder::class) {
+            return $folders->get($folder->model_id);
+        }
+
+        if ($folder->model_type && $folder->model_id) {
+            return $folders->first(fn (Folder $parent): bool => $parent->model_type === $folder->model_type
+                && ! $parent->model_id
+                && $parent->collection === $folder->collection);
+        }
+
+        if ($folder->model_type && $folder->collection) {
+            return $folders->first(fn (Folder $parent): bool => $parent->model_type === $folder->model_type
+                && ! $parent->model_id
+                && ! $parent->collection);
+        }
+
+        return null;
+    }
+
+    /**
+     * @return Collection<int, Folder>
+     */
+    protected function allFolders(): Collection
+    {
+        // Like the folder levels, without the user access global scope
+        return $this->allFolders ??= Folder::withoutGlobalScope('user')->get()->keyBy('id');
     }
 
     public function getCurrentFolderProperty(): ?Folder

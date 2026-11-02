@@ -23,7 +23,12 @@
         <div class="fi-section-header-wrapper">
             {{-- Left: Folder Name --}}
             <div class="fi-section-header-heading">
-                @if($currentFolder)
+                {{-- The search looks in all folders, not only in the open one --}}
+                @if(filled($search))
+                    <h3 class="fi-section-header-title">
+                        {{ trans('filament-media-manager::messages.picker.search_results') }}
+                    </h3>
+                @elseif($currentFolder)
                     <h3 class="fi-section-header-title">
                         {{ $currentFolder->name }}
                     </h3>
@@ -509,9 +514,16 @@
                                             }">
                                             {{ $title }}
                                         </h1>
-                                        <p class="media-timestamp-picker-{{$mediaItem->id}}">
-                                            {{ $mediaItem->created_at->diffForHumans() }}
-                                        </p>
+                                        {{-- In the search results, the folder the medium is in --}}
+                                        @if($mediaItem->relationLoaded('pickerFolder') && $mediaItem->pickerFolder)
+                                            <p class="media-timestamp-picker-{{$mediaItem->id}}" title="{{ $mediaItem->pickerFolder->name }}">
+                                                {{ $mediaItem->pickerFolder->name }}
+                                            </p>
+                                        @else
+                                            <p class="media-timestamp-picker-{{$mediaItem->id}}">
+                                                {{ $mediaItem->created_at->diffForHumans() }}
+                                            </p>
+                                        @endif
                                     </div>
 
                                     @if(in_array($mediaItem->uuid, $selectedMedia))
