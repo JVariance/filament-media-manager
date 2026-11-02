@@ -152,6 +152,7 @@ return [
         'back' => 'Back',
         'breadcrumbs' => 'Folder path',
         'search' => 'Search folders and files...',
+        'search_results' => 'Search results in all folders',
         'select_folder' => 'Select a folder to browse media files',
         'folders' => 'Folders',
         'media_files' => 'Media Files',

@@ -23,7 +23,12 @@
         <div class="fi-section-header-wrapper">
             {{-- Left: Folder Name, with the folders above it --}}
             <div class="fi-section-header-heading">
-                @if($currentFolder)
+                {{-- The search looks in all folders, not only in the open one --}}
+                @if(filled($search))
+                    <h3 class="fi-section-header-title">
+                        {{ trans('filament-media-manager::messages.picker.search_results') }}
+                    </h3>
+                @elseif($currentFolder)
                     {{-- Wraps like the page breadcrumbs; only a name wider than the whole line is cut, in full in its title --}}
                     <nav class="media-picker-breadcrumbs" aria-label="{{ trans('filament-media-manager::messages.picker.breadcrumbs') }}">
                         <span class="media-picker-breadcrumb">
@@ -596,9 +601,16 @@
                                             }">
                                             {{ $title }}
                                         </h1>
-                                        <p class="media-timestamp-picker-{{$mediaItem->id}}">
-                                            {{ $mediaItem->created_at->diffForHumans() }}
-                                        </p>
+                                        {{-- In the search results, the folder the medium is in --}}
+                                        @if($mediaItem->relationLoaded('pickerFolder') && $mediaItem->pickerFolder)
+                                            <p class="media-timestamp-picker-{{$mediaItem->id}}" title="{{ $mediaItem->pickerFolder->name }}">
+                                                {{ $mediaItem->pickerFolder->name }}
+                                            </p>
+                                        @else
+                                            <p class="media-timestamp-picker-{{$mediaItem->id}}">
+                                                {{ $mediaItem->created_at->diffForHumans() }}
+                                            </p>
+                                        @endif
                                     </div>
 
                                     @if(in_array($mediaItem->uuid, $selectedMedia))
